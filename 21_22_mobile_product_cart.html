@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Product Catalog & Cart Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+      display: flex;
+      gap: 30px;
+      padding: 40px 20px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .mobile-frame {
+      width: 375px;
+      background: hsl(222 47% 11%);
+      border: 8px solid #333;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+    .mobile-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 24px;
+      background: #333;
+      border-radius: 0 0 16px 16px;
+      z-index: 100;
+    }
+    .mobile-screen {
+      height: 812px;
+      overflow-y: auto;
+      background: hsl(222 47% 11%);
+    }
+    .mobile-screen::-webkit-scrollbar {
+      width: 0;
+    }
+    .top-bar {
+      background: hsl(222 47% 14%);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .back-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .top-bar-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .cart-icon-wrapper {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .cart-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 18px;
+      height: 18px;
+      background: hsl(0 84% 60%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+    }
+    .search-bar {
+      background: hsl(222 47% 14%);
+      padding: 12px 16px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      position: sticky;
+      top: 56px;
+      z-index: 19;
+    }
+    .search-input-wrapper {
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      height: 40px;
+    }
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+    }
+    .search-input:focus {
+      outline: none;
+    }
+    .search-input::placeholder {
+      color: hsl(215 20% 65%);
+    }
+    .category-chips {
+      background: hsl(222 47% 14%);
+      padding: 12px 16px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      position: sticky;
+      top: 108px;
+      z-index: 18;
+    }
+    .category-chips::-webkit-scrollbar {
+      height: 0;
+    }
+    .category-chip {
+      min-width: 80px;
+      height: 32px;
+      padding: 0 16px;
+      background: hsl(217 33% 22%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .category-chip.active {
+      background: hsl(199 89% 48%);
+      border-color: hsl(199 89% 48%);
+      color: white;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 16px;
+      padding-bottom: 140px;
+    }
+    .product-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .product-card.selected {
+      border-color: hsl(199 89% 48%);
+      border-width: 2px;
+    }
+    .product-image {
+      width: 100%;
+      height: 120px;
+      background: hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(215 20% 65%);
+    }
+    .product-details {
+      padding: 12px;
+    }
+    .product-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-price {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stock-status {
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+    .stock-status.in-stock {
+      color: hsl(142 71% 45%);
+    }
+    .stock-status.out-of-stock {
+      color: hsl(215 20% 65%);
+    }
+    .quantity-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qty-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .qty-btn.plus {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .qty-btn:active {
+      transform: scale(0.95);
+    }
+    .qty-display {
+      flex: 1;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .unavailable {
+      text-align: center;
+      color: hsl(215 20% 65%);
+      font-size: 13px;
+      padding: 8px 0;
+    }
+    .cart-button {
+      position: fixed;
+      bottom: 80px;
+      left: 16px;
+      right: 16px;
+      width: calc(100% - 32px);
+      max-width: 343px;
+      height: 56px;
+      background: hsl(199 89% 48%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .cart-item {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-height: 80px;
+      position: relative;
+    }
+    .cart-item-image {
+      width: 56px;
+      height: 56px;
+      background: hsl(217 33% 22%);
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(215 20% 65%);
+    }
+    .cart-item-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .cart-item-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .cart-item-price {
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+    }
+    .cart-item-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .cart-item-subtotal {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .remove-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: hsl(217 33% 22%);
+      border: none;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .summary-card {
+      background: hsl(222 47% 16%);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 16px 0;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .summary-row.total {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid hsl(217 33% 22%);
+    }
+    .delivery-section {
+      padding: 16px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .radio-option.selected {
+      border-color: hsl(199 89% 48%);
+      background: hsl(199 89% 48% / 0.05);
+    }
+    .radio-circle {
+      width: 20px;
+      height: 20px;
+      border: 2px solid hsl(217 33% 22%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .radio-option.selected .radio-circle {
+      border-color: hsl(199 89% 48%);
+    }
+    .radio-circle::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: transparent;
+    }
+    .radio-option.selected .radio-circle::after {
+      background: hsl(199 89% 48%);
+    }
+    .checkout-button {
+      margin: 16px;
+      width: calc(100% - 32px);
+      height: 56px;
+      background: hsl(199 89% 48%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .clear-all-btn {
+      color: hsl(0 84% 60%);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background: hsl(222 47% 14%);
+      border-top: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 8px;
+    }
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item.active .nav-icon {
+      color: hsl(199 89% 48%);
+    }
+    .nav-label {
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item.active .nav-label {
+      color: hsl(199 89% 48%);
+    }
+    .screen-label {
+      text-align: center;
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Frame 1: Product Catalog -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">21_Mobile_Product_Catalog</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="top-bar-title">Place Order</div>
+        <div class="cart-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <div class="cart-badge">3</div>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <div class="search-input-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="search-input" placeholder="Search products...">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Category Chips -->
+      <div class="category-chips">
+        <div class="category-chip active">All</div>
+        <div class="category-chip">Beverages</div>
+        <div class="category-chip">Snacks</div>
+        <div class="category-chip">Personal Care</div>
+        <div class="category-chip">Household</div>
+      </div>
+
+      <!-- Product Grid -->
+      <div class="product-grid">
+        <!-- Product 1 (selected) -->
+        <div class="product-card selected">
+          <div class="product-image">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-details">
+            <div class="product-name">Coca Cola 1L</div>
+            <div class="product-price">×2 = $5.00</div>
+            <div class="stock-status in-stock">In Stock</div>
+            <div class="quantity-selector">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">2</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 2 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-details">
+            <div class="product-name">Lay's Chips Original 150g</div>
+            <div class="product-price">$1.80</div>
+            <div class="stock-status in-stock">In Stock</div>
+            <div class="quantity-selector">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">0</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 3 (out of stock) -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-details">
+            <div class="product-name">Sprite 1L Bottle</div>
+            <div class="product-price">$2.30</div>
+            <div class="stock-status out-of-stock">Out of Stock</div>
+            <div class="unavailable">Unavailable</div>
+          </div>
+        </div>
+
+        <!-- Product 4 (selected) -->
+        <div class="product-card selected">
+          <div class="product-image">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-details">
+            <div class="product-name">Doritos Nacho Cheese</div>
+            <div class="product-price">×1 = $2.80</div>
+            <div class="stock-status in-stock">In Stock</div>
+            <div class="quantity-selector">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">1</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 5 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-details">
+            <div class="product-name">Pepsi 2L Bottle</div>
+            <div class="product-price">$3.00</div>
+            <div class="stock-status in-stock">In Stock</div>
+            <div class="quantity-selector">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">0</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 6 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-details">
+            <div class="product-name">Oreo Original 154g Pack</div>
+            <div class="product-price">$3.20</div>
+            <div class="stock-status in-stock">In Stock</div>
+            <div class="quantity-selector">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">0</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Cart Button -->
+      <button class="cart-button">
+        View Cart (3) • $7.80
+      </button>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span class="nav-label">Home</span>
+        </div>
+        
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span class="nav-label">Tasks</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-label">More</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 2: Cart View -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">22_Mobile_Cart_View</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="top-bar-title">Cart</div>
+        <div class="clear-all-btn">Clear All</div>
+      </div>
+
+      <!-- Cart Items -->
+      <div style="padding: 16px 16px 0;">
+        <!-- Cart Item 1 -->
+        <div class="cart-item">
+          <button class="remove-btn">✕</button>
+          <div class="cart-item-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">Coca Cola 1L</div>
+            <div class="cart-item-price">$2.50</div>
+            <div class="quantity-selector" style="margin-top: 8px;">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">2</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+          <div class="cart-item-right">
+            <div class="cart-item-subtotal">$5.00</div>
+          </div>
+        </div>
+
+        <!-- Cart Item 2 -->
+        <div class="cart-item">
+          <button class="remove-btn">✕</button>
+          <div class="cart-item-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">Doritos Nacho Cheese</div>
+            <div class="cart-item-price">$2.80</div>
+            <div class="quantity-selector" style="margin-top: 8px;">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">1</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+          <div class="cart-item-right">
+            <div class="cart-item-subtotal">$2.80</div>
+          </div>
+        </div>
+
+        <!-- Cart Item 3 -->
+        <div class="cart-item">
+          <button class="remove-btn">✕</button>
+          <div class="cart-item-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">Pepsi 2L</div>
+            <div class="cart-item-price">$3.00</div>
+            <div class="quantity-selector" style="margin-top: 8px;">
+              <button class="qty-btn minus">−</button>
+              <div class="qty-display">2</div>
+              <button class="qty-btn plus">+</button>
+            </div>
+          </div>
+          <div class="cart-item-right">
+            <div class="cart-item-subtotal">$6.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Card -->
+      <div class="summary-card">
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span>$13.80</span>
+        </div>
+        <div class="summary-row">
+          <span>Tax (10%):</span>
+          <span>$1.38</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total:</span>
+          <span>$15.18</span>
+        </div>
+      </div>
+
+      <!-- Delivery Method -->
+      <div class="delivery-section">
+        <div class="section-title">Delivery Method</div>
+        <div class="radio-option selected">
+          <div class="radio-circle"></div>
+          <span>Immediate (from van)</span>
+        </div>
+        <div class="radio-option">
+          <div class="radio-circle"></div>
+          <span>Scheduled delivery</span>
+        </div>
+      </div>
+
+      <!-- Checkout Button -->
+      <button class="checkout-button">
+        Continue to Payment
+      </button>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span class="nav-label">Home</span>
+        </div>
+        
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span class="nav-label">Tasks</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-label">More</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

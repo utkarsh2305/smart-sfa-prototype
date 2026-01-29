@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Create Walk-In Customer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      width: 500px;
+      max-height: 90vh;
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .modal-subtitle {
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .required {
+      color: hsl(0 84% 60%);
+      margin-left: 2px;
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: hsl(215 20% 65%);
+    }
+    .form-input {
+      width: 100%;
+      height: 48px;
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: hsl(210 40% 98%);
+      transition: all 0.2s;
+    }
+    .form-input.with-icon {
+      padding-left: 40px;
+    }
+    .form-input.with-validation {
+      padding-right: 40px;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+      box-shadow: 0 0 0 3px hsl(199 89% 48% / 0.1);
+    }
+    .form-input::placeholder {
+      color: hsl(215 20% 55%);
+    }
+    .validation-icon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: hsl(142 71% 45%);
+    }
+    .phone-input-group {
+      display: flex;
+      gap: 8px;
+    }
+    .country-code {
+      width: 80px;
+      flex-shrink: 0;
+    }
+    .textarea {
+      width: 100%;
+      min-height: 60px;
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 14px;
+      color: hsl(210 40% 98%);
+      font-family: inherit;
+      resize: vertical;
+    }
+    .textarea:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+      box-shadow: 0 0 0 3px hsl(199 89% 48% / 0.1);
+    }
+    .accordion {
+      margin-bottom: 20px;
+    }
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .accordion-header:hover {
+      background: hsl(217 33% 20%);
+    }
+    .accordion-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: hsl(210 40% 98%);
+    }
+    .accordion-icon {
+      transition: transform 0.2s;
+    }
+    .accordion-icon.expanded {
+      transform: rotate(180deg);
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .accordion-content.expanded {
+      max-height: 500px;
+      margin-top: 16px;
+    }
+    .info-box {
+      background: hsl(199 89% 48% / 0.1);
+      border: 1px solid hsl(199 89% 48% / 0.2);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .info-icon {
+      color: hsl(199 89% 48%);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .info-text {
+      font-size: 13px;
+      color: hsl(210 40% 95%);
+      line-height: 1.5;
+    }
+    .customer-type-badge {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: hsl(215 20% 65% / 0.15);
+      color: hsl(215 20% 75%);
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-subtext {
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .modal-footer {
+      padding: 20px 24px;
+      border-top: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .btn {
+      height: 48px;
+      padding: 0 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: hsl(215 20% 65%);
+    }
+    .btn-secondary:hover {
+      color: hsl(210 40% 98%);
+      background: hsl(217 33% 17%);
+    }
+    .btn-primary {
+      background: hsl(199 89% 48%);
+      color: white;
+      font-weight: 700;
+    }
+    .btn-primary:hover {
+      background: hsl(199 89% 55%);
+      box-shadow: 0 4px 12px hsl(199 89% 48% / 0.3);
+    }
+    .toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: hsl(142 71% 45%);
+      color: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    .screen-label {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      z-index: 1001;
+    }
+  </style>
+</head>
+<body>
+  <!-- Modal Overlay -->
+  <div class="modal-overlay">
+    <!-- Modal -->
+    <div class="modal">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">Create Walk-In Customer</h2>
+        <div class="modal-subtitle">Quick registration - minimal details required</div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Customer Name -->
+        <div class="form-group">
+          <label class="form-label">
+            Customer Name<span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path>
+            </svg>
+            <input 
+              type="text" 
+              class="form-input with-icon" 
+              placeholder="e.g., Bodega Nueva"
+              autofocus
+            >
+          </div>
+        </div>
+
+        <!-- Mobile Number -->
+        <div class="form-group">
+          <label class="form-label">
+            Mobile Number<span class="required">*</span>
+          </label>
+          <div class="phone-input-group">
+            <input 
+              type="text" 
+              class="form-input country-code" 
+              value="+51"
+              readonly
+            >
+            <div class="input-wrapper" style="flex: 1;">
+              <input 
+                type="tel" 
+                class="form-input with-validation" 
+                placeholder="999 111 222"
+              >
+              <svg class="validation-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+          <svg class="info-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <div class="info-text">
+            You can add address and tax details later. Customer can place orders immediately with just name and mobile.
+          </div>
+        </div>
+
+        <!-- Optional Details Accordion -->
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion()">
+            <div class="accordion-title">Additional Info (Optional)</div>
+            <svg class="accordion-icon" id="accordion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="accordion-content" id="accordion-content">
+            <!-- Address -->
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <textarea 
+                class="textarea" 
+                placeholder="Street address, neighborhood..."
+                rows="2"
+              ></textarea>
+            </div>
+
+            <!-- Tax ID -->
+            <div class="form-group">
+              <label class="form-label">Tax ID / RUC</label>
+              <input 
+                type="text" 
+                class="form-input" 
+                placeholder="e.g., 20123456789"
+              >
+            </div>
+
+            <!-- Email -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Email</label>
+              <input 
+                type="email" 
+                class="form-input" 
+                placeholder="e.g., contact@bodega.com"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Type Badge -->
+        <div class="customer-type-badge">
+          <div class="badge-row">
+            <div class="badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path>
+              </svg>
+              Walk-In Customer
+            </div>
+          </div>
+          <div class="badge-subtext">Will be assigned to Walk-In Customers route</div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">
+          Create & Place Order
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Toast (hidden by default, shown after creation) -->
+  <!-- <div class="toast">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    Customer created successfully
+  </div> -->
+
+  <div class="screen-label">31_Create_WalkIn_Customer_Quick</div>
+
+  <script>
+    function toggleAccordion() {
+      const content = document.getElementById('accordion-content');
+      const icon = document.getElementById('accordion-icon');
+      
+      content.classList.toggle('expanded');
+      icon.classList.toggle('expanded');
+    }
+  </script>
+</body>
+</html>

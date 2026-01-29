@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Published Daily Plan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+      overflow-x: hidden;
+    }
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 64px;
+      background: hsl(222 47% 11%);
+      border-right: 1px solid hsl(217 33% 22%);
+      position: fixed;
+      height: 100vh;
+      z-index: 40;
+    }
+    .sidebar-logo {
+      padding: 20px 12px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      text-align: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .main-container {
+      margin-left: 64px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-header {
+      height: 64px;
+      background: hsl(222 47% 14%);
+      border-bottom: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .page-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+    }
+    .breadcrumb {
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+      margin-bottom: 12px;
+    }
+    .page-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .page-title-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+    }
+    .status-badge {
+      background: hsl(142 71% 45% / 0.15);
+      color: hsl(142 71% 45%);
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .page-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+    }
+    .btn-secondary {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+      border: 1px solid hsl(217 33% 22%);
+    }
+    .btn-secondary:hover {
+      background: hsl(217 33% 27%);
+    }
+    .btn-success {
+      background: hsl(142 71% 45%);
+      color: white;
+    }
+    .btn-success:hover {
+      background: hsl(142 71% 50%);
+    }
+    .menu-btn {
+      width: 40px;
+      height: 40px;
+      background: hsl(217 33% 22%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .menu-btn:hover {
+      background: hsl(217 33% 27%);
+    }
+    .content-area {
+      flex: 1;
+      padding: 32px;
+    }
+    .territory-info-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .territory-info-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .territory-icon {
+      width: 48px;
+      height: 48px;
+      background: hsl(199 89% 48% / 0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(199 89% 48%);
+    }
+    .territory-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .territory-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .territory-meta {
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+    }
+    .territory-stats {
+      font-size: 14px;
+      color: hsl(210 40% 98%);
+    }
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .agent-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 20px;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s;
+    }
+    .agent-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      border-color: hsl(217 33% 27%);
+    }
+    .agent-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .agent-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: hsl(199 89% 48%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
+    .agent-info {
+      flex: 1;
+    }
+    .agent-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .role-badge {
+      background: hsl(217 33% 22%);
+      color: hsl(215 20% 65%);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      display: inline-block;
+    }
+    .agent-body {
+      flex: 1;
+      margin-bottom: 12px;
+    }
+    .assigned-route {
+      font-size: 14px;
+      color: hsl(210 40% 98%);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .task-badge {
+      background: hsl(199 89% 48% / 0.15);
+      color: hsl(199 89% 48%);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    .metrics {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+    }
+    .metric {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .agent-footer {
+      border-top: 1px solid hsl(217 33% 22%);
+      padding-top: 12px;
+      text-align: right;
+    }
+    .view-details-link {
+      font-size: 13px;
+      color: hsl(199 89% 48%);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .view-details-link:hover {
+      color: hsl(199 89% 55%);
+    }
+    .bottom-action-bar {
+      background: hsl(222 47% 14%);
+      border-top: 1px solid hsl(217 33% 22%);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar (Collapsed) -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">SFA</div>
+    </aside>
+
+    <!-- Main Container -->
+    <main class="main-container">
+      <!-- Top Header -->
+      <header class="top-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: hsl(215 20% 65%); cursor: pointer;">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </header>
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="breadcrumb">Task Management > Daily Planning > Jan 27, 2026</div>
+        <div class="page-title-row">
+          <div class="page-title-left">
+            <h1 class="page-title">Daily Plan - January 27, 2026</h1>
+            <span class="status-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Published
+            </span>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-secondary">Edit Plan</button>
+            <button class="menu-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Territory Info Card -->
+        <div class="territory-info-card">
+          <div class="territory-info-section">
+            <div class="territory-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <div class="territory-details">
+              <div class="territory-name">Territory: North Lima</div>
+              <div class="territory-meta">Published at 7:30 AM by Ana Torres</div>
+            </div>
+          </div>
+          <div class="territory-stats">
+            <strong>3 agents</strong> • <strong>45 total customers</strong>
+          </div>
+        </div>
+
+        <!-- Agent Assignment Cards Grid -->
+        <div class="agent-grid">
+          <!-- Agent Card 1 -->
+          <div class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">LV</div>
+              <div class="agent-info">
+                <div class="agent-name">Luis Vargas</div>
+                <span class="role-badge">Field Agent</span>
+              </div>
+            </div>
+            <div class="agent-body">
+              <div class="assigned-route">
+                <span>North Lima - Delivery</span>
+                <span class="task-badge">Delivery</span>
+              </div>
+              <div class="metrics">
+                <div class="metric">
+                  <span>📍</span>
+                  <span>15 stops</span>
+                </div>
+                <div class="metric">
+                  <span>⏱️</span>
+                  <span>~4 hrs</span>
+                </div>
+                <div class="metric">
+                  <span>✓</span>
+                  <span>0 completed</span>
+                </div>
+              </div>
+            </div>
+            <div class="agent-footer">
+              <a href="#" class="view-details-link">View Details →</a>
+            </div>
+          </div>
+
+          <!-- Agent Card 2 -->
+          <div class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar" style="background: hsl(142 71% 45%);">MC</div>
+              <div class="agent-info">
+                <div class="agent-name">María Castro</div>
+                <span class="role-badge">Field Agent</span>
+              </div>
+            </div>
+            <div class="agent-body">
+              <div class="assigned-route">
+                <span>North Lima - Sales</span>
+                <span class="task-badge" style="background: hsl(142 71% 45% / 0.15); color: hsl(142 71% 45%);">Sales</span>
+              </div>
+              <div class="metrics">
+                <div class="metric">
+                  <span>📍</span>
+                  <span>12 stops</span>
+                </div>
+                <div class="metric">
+                  <span>⏱️</span>
+                  <span>~3 hrs</span>
+                </div>
+                <div class="metric">
+                  <span>✓</span>
+                  <span>0 completed</span>
+                </div>
+              </div>
+            </div>
+            <div class="agent-footer">
+              <a href="#" class="view-details-link">View Details →</a>
+            </div>
+          </div>
+
+          <!-- Agent Card 3 -->
+          <div class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar" style="background: hsl(262 83% 58%);">JM</div>
+              <div class="agent-info">
+                <div class="agent-name">Juan Martínez</div>
+                <span class="role-badge">Field Agent</span>
+              </div>
+            </div>
+            <div class="agent-body">
+              <div class="assigned-route">
+                <span>Central Lima - Delivery</span>
+                <span class="task-badge">Delivery</span>
+              </div>
+              <div class="metrics">
+                <div class="metric">
+                  <span>📍</span>
+                  <span>18 stops</span>
+                </div>
+                <div class="metric">
+                  <span>⏱️</span>
+                  <span>~5 hrs</span>
+                </div>
+                <div class="metric">
+                  <span>✓</span>
+                  <span>0 completed</span>
+                </div>
+              </div>
+            </div>
+            <div class="agent-footer">
+              <a href="#" class="view-details-link">View Details →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div class="bottom-action-bar">
+        <button class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Plan PDF
+        </button>
+        <button class="btn btn-success">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Complete Plan
+        </button>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

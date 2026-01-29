@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Check-In Flow Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+      display: flex;
+      gap: 40px;
+      padding: 40px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .mobile-frame {
+      width: 375px;
+      background: hsl(222 47% 11%);
+      border: 8px solid #333;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+    .mobile-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 24px;
+      background: #333;
+      border-radius: 0 0 16px 16px;
+      z-index: 100;
+    }
+    .mobile-screen {
+      height: 812px;
+      overflow-y: auto;
+      background: hsl(222 47% 11%);
+    }
+    .mobile-screen::-webkit-scrollbar {
+      width: 0;
+    }
+    .top-bar {
+      background: hsl(222 47% 14%);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .back-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .top-bar-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      background: hsl(30 100% 50% / 0.15);
+      color: hsl(30 100% 50%);
+    }
+    .timer-display {
+      font-size: 16px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .map-container {
+      height: 200px;
+      background: linear-gradient(135deg, hsl(220 20% 25%) 0%, hsl(220 20% 20%) 100%);
+      position: relative;
+      overflow: hidden;
+      margin: 16px;
+      border-radius: 8px;
+    }
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        repeating-linear-gradient(0deg, hsl(217 33% 22% / 0.3) 0px, transparent 1px, transparent 20px),
+        repeating-linear-gradient(90deg, hsl(217 33% 22% / 0.3) 0px, transparent 1px, transparent 20px);
+    }
+    .map-pin {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .customer-pin {
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: hsl(199 89% 48%);
+    }
+    .agent-pin {
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .pulse-dot {
+      width: 16px;
+      height: 16px;
+      background: hsl(0 84% 60%);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+      box-shadow: 0 0 0 0 hsl(0 84% 60% / 0.7);
+    }
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 hsl(0 84% 60% / 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 12px hsl(0 84% 60% / 0);
+      }
+    }
+    .connecting-line {
+      position: absolute;
+      top: 92px;
+      left: 50%;
+      width: 2px;
+      height: 50px;
+      background: hsl(199 89% 48% / 0.3);
+      transform: translateX(-50%);
+    }
+    .distance-card {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: hsl(222 47% 14% / 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .distance-card.near {
+      border-color: hsl(142 71% 45%);
+      color: hsl(142 71% 45%);
+    }
+    .info-card {
+      background: hsl(199 89% 48% / 0.1);
+      border: 1px solid hsl(199 89% 48% / 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 16px;
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .info-icon {
+      width: 16px;
+      height: 16px;
+      color: hsl(199 89% 48%);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .checkin-button, .checkout-button {
+      position: fixed;
+      bottom: 80px;
+      left: 16px;
+      right: 16px;
+      width: calc(100% - 32px);
+      max-width: 343px;
+      height: 56px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .checkin-button {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .checkin-button:active {
+      background: hsl(199 89% 42%);
+      transform: scale(0.98);
+    }
+    .checkout-button {
+      background: hsl(30 100% 50%);
+      color: white;
+    }
+    .checkout-button:active {
+      background: hsl(30 100% 45%);
+      transform: scale(0.98);
+    }
+    .checked-in-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 16px;
+    }
+    .check-icon {
+      width: 80px;
+      height: 80px;
+      background: hsl(142 71% 45% / 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(142 71% 45%);
+    }
+    .checked-in-text {
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .checked-in-time {
+      font-size: 14px;
+      color: hsl(215 20% 65%);
+    }
+    .distance-logged {
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+      background: hsl(217 33% 22%);
+      padding: 6px 12px;
+      border-radius: 12px;
+    }
+    .action-cards {
+      padding: 0 16px 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .action-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-card:active {
+      background: hsl(222 47% 16%);
+    }
+    .action-card.prominent {
+      border-color: hsl(199 89% 48%);
+      background: hsl(199 89% 48% / 0.05);
+    }
+    .action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .action-card.prominent .action-icon {
+      background: hsl(199 89% 48% / 0.2);
+      color: hsl(199 89% 48%);
+    }
+    .action-text {
+      flex: 1;
+    }
+    .action-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .action-subtitle {
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background: hsl(222 47% 14%);
+      border-top: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 8px;
+    }
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item.active .nav-icon {
+      color: hsl(199 89% 48%);
+    }
+    .nav-label {
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item.active .nav-label {
+      color: hsl(199 89% 48%);
+    }
+    .screen-label {
+      text-align: center;
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+      padding: 12px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Frame 1: Check-In Button Active -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">16_Mobile_CheckIn_Button</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="top-bar-title">Tienda García</div>
+        <div style="width: 32px;"></div>
+      </div>
+
+      <!-- Map Container -->
+      <div class="map-container">
+        <div class="map-grid"></div>
+        
+        <!-- Customer Pin (Blue) -->
+        <div class="map-pin customer-pin">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3" fill="white"></circle>
+          </svg>
+        </div>
+
+        <!-- Connecting Line -->
+        <div class="connecting-line"></div>
+
+        <!-- Agent Pin (Red Pulsing) -->
+        <div class="map-pin agent-pin">
+          <div class="pulse-dot"></div>
+        </div>
+
+        <!-- Distance Card Overlay -->
+        <div class="distance-card near">
+          <span>📍</span>
+          <span>You are 12m from customer</span>
+        </div>
+      </div>
+
+      <!-- Info Card -->
+      <div class="info-card">
+        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+          GPS check-in is logged for audit but not enforced. You can check in from any distance.
+        </div>
+      </div>
+
+      <!-- Check-In Button -->
+      <button class="checkin-button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        Check In at Tienda García
+      </button>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span class="nav-label">Home</span>
+        </div>
+        
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span class="nav-label">Tasks</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-label">More</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 2: Visit In Progress -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">17_Mobile_Visit_InProgress</div>
+      
+      <!-- Top Bar with Status -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="status-badge">Visit in progress</span>
+          <span class="timer-display">00:03:24</span>
+        </div>
+        <div style="width: 32px;"></div>
+      </div>
+
+      <!-- Checked In Area -->
+      <div class="checked-in-area">
+        <div class="check-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="checked-in-text">Checked in at 10:15 AM</div>
+        <div class="checked-in-time">Tienda García</div>
+        <div class="distance-logged">Distance logged: 12m from customer</div>
+      </div>
+
+      <!-- Action Cards -->
+      <div class="action-cards">
+        <!-- Place Order - Prominent -->
+        <div class="action-card prominent">
+          <div class="action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+          </div>
+          <div class="action-text">
+            <div class="action-title">Place Order</div>
+            <div class="action-subtitle">Create new order for this customer</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+
+        <!-- View Recommendations -->
+        <div class="action-card">
+          <div class="action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="action-text">
+            <div class="action-title">View Recommendations</div>
+            <div class="action-subtitle">AI-powered product suggestions</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+
+        <!-- Add Notes -->
+        <div class="action-card">
+          <div class="action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <div class="action-text">
+            <div class="action-title">Add Notes</div>
+            <div class="action-subtitle">Record visit observations</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Check-Out Button -->
+      <button class="checkout-button">
+        Complete Visit
+      </button>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span class="nav-label">Home</span>
+        </div>
+        
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span class="nav-label">Tasks</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-label">More</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

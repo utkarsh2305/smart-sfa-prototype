@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Walk-In Order Placement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+    }
+    .dashboard {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 240px;
+      background: hsl(222 47% 14%);
+      border-right: 1px solid hsl(217 33% 22%);
+      padding: 20px;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      color: hsl(199 89% 48%);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item.active {
+      background: hsl(199 89% 48% / 0.15);
+      color: hsl(199 89% 48%);
+    }
+    .main-content {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      height: 100vh;
+    }
+    .left-panel {
+      width: 60%;
+      padding: 24px;
+      overflow-y: auto;
+      border-right: 1px solid hsl(217 33% 22%);
+    }
+    .right-panel {
+      width: 40%;
+      background: hsl(222 47% 12%);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .search-bar {
+      margin-bottom: 20px;
+    }
+    .search-input {
+      width: 100%;
+      height: 48px;
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 0 16px 0 44px;
+      font-size: 14px;
+      color: hsl(210 40% 98%);
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+    }
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: hsl(215 20% 65%);
+    }
+    .category-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .filter-chip {
+      padding: 8px 16px;
+      background: hsl(217 33% 22%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .filter-chip:hover {
+      background: hsl(217 33% 27%);
+    }
+    .filter-chip.active {
+      background: hsl(199 89% 48%);
+      border-color: hsl(199 89% 48%);
+      color: white;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .product-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .product-card:hover {
+      border-color: hsl(199 89% 48% / 0.5);
+    }
+    .product-card.selected {
+      border: 2px solid hsl(199 89% 48%);
+    }
+    .product-image {
+      width: 100%;
+      height: 120px;
+      background: hsl(217 33% 20%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+    .product-info {
+      padding: 12px;
+    }
+    .product-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-price {
+      font-size: 14px;
+      font-weight: 700;
+      color: hsl(210 40% 98%);
+      margin-bottom: 8px;
+    }
+    .product-stock {
+      font-size: 11px;
+      color: hsl(142 71% 45%);
+      margin-bottom: 8px;
+    }
+    .quantity-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: hsl(217 33% 22%);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .qty-btn:hover {
+      background: hsl(217 33% 27%);
+    }
+    .qty-btn.add {
+      background: hsl(199 89% 48%);
+    }
+    .qty-btn.add:hover {
+      background: hsl(199 89% 55%);
+    }
+    .qty-display {
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 24px;
+      text-align: center;
+    }
+    .cart-section {
+      padding: 20px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      overflow-y: auto;
+      max-height: 45vh;
+    }
+    .cart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .cart-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .customer-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: hsl(199 89% 48% / 0.15);
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(199 89% 48%);
+      cursor: pointer;
+    }
+    .cart-items {
+      margin-bottom: 16px;
+    }
+    .cart-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid hsl(217 33% 22%);
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .cart-item-info {
+      flex: 1;
+    }
+    .cart-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .cart-item-price {
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .cart-item-qty {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cart-item-total {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .cart-total {
+      padding-top: 16px;
+      border-top: 2px solid hsl(217 33% 22%);
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .total-row.final {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .recommendations-section {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .recommendations-header {
+      margin-bottom: 16px;
+    }
+    .recommendations-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+    }
+    .tab {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      color: hsl(210 40% 98%);
+    }
+    .tab.active {
+      color: hsl(199 89% 48%);
+      border-bottom-color: hsl(199 89% 48%);
+    }
+    .recommendations-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .recommendation-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .recommendation-card:hover {
+      border-color: hsl(199 89% 48% / 0.5);
+    }
+    .recommendation-image {
+      width: 48px;
+      height: 48px;
+      background: hsl(217 33% 20%);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .recommendation-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .recommendation-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .recommendation-price {
+      font-size: 13px;
+      font-weight: 700;
+      color: hsl(210 40% 98%);
+    }
+    .recommendation-meta {
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      margin-top: 2px;
+    }
+    .add-btn-small {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: hsl(199 89% 48%);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .add-btn-small:hover {
+      background: hsl(199 89% 55%);
+      transform: scale(1.05);
+    }
+    .discount-badge {
+      background: hsl(30 100% 50% / 0.15);
+      color: hsl(30 100% 50%);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-left: 8px;
+    }
+    .view-terms {
+      color: hsl(199 89% 48%);
+      font-size: 11px;
+      text-decoration: none;
+    }
+    .view-terms:hover {
+      text-decoration: underline;
+    }
+    .floating-actions {
+      padding: 16px 20px;
+      background: hsl(222 47% 14%);
+      border-top: 1px solid hsl(217 33% 22%);
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      flex: 1;
+      height: 48px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-secondary {
+      background: hsl(217 33% 22%);
+      color: hsl(215 20% 65%);
+    }
+    .btn-secondary:hover {
+      background: hsl(217 33% 27%);
+      color: hsl(210 40% 98%);
+    }
+    .btn-primary {
+      background: hsl(199 89% 48%);
+      color: white;
+      font-weight: 700;
+      flex: 2;
+    }
+    .btn-primary:hover {
+      background: hsl(199 89% 55%);
+      box-shadow: 0 4px 12px hsl(199 89% 48% / 0.3);
+    }
+    .screen-label {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">Smart SFA</div>
+      <div class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path>
+        </svg>
+        <span>Walk-In Sales</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Left Panel: Product Catalog -->
+      <div class="left-panel">
+        <!-- Search Bar -->
+        <div class="search-bar" style="position: relative;">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="search-input" placeholder="Search products...">
+        </div>
+
+        <!-- Category Filters -->
+        <div class="category-filters">
+          <div class="filter-chip active">All</div>
+          <div class="filter-chip">Beverages</div>
+          <div class="filter-chip">Snacks</div>
+          <div class="filter-chip">Personal Care</div>
+          <div class="filter-chip">Household</div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="product-grid">
+          <!-- Product 1 -->
+          <div class="product-card selected">
+            <div class="product-image">🥤</div>
+            <div class="product-info">
+              <div class="product-name">Coca Cola 1L</div>
+              <div class="product-price">$2.50</div>
+              <div class="product-stock">In Stock</div>
+              <div class="quantity-selector">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">2</div>
+                <button class="qty-btn add">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 2 -->
+          <div class="product-card">
+            <div class="product-image">🥤</div>
+            <div class="product-info">
+              <div class="product-name">Pepsi 2L</div>
+              <div class="product-price">$3.00</div>
+              <div class="product-stock">In Stock</div>
+              <div class="quantity-selector">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">0</div>
+                <button class="qty-btn add">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 3 -->
+          <div class="product-card selected">
+            <div class="product-image">🍟</div>
+            <div class="product-info">
+              <div class="product-name">Lay's Chips 50g</div>
+              <div class="product-price">$1.80</div>
+              <div class="product-stock">In Stock</div>
+              <div class="quantity-selector">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">1</div>
+                <button class="qty-btn add">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 4 -->
+          <div class="product-card">
+            <div class="product-image">🥤</div>
+            <div class="product-info">
+              <div class="product-name">Sprite 1.5L</div>
+              <div class="product-price">$2.75</div>
+              <div class="product-stock" style="color: hsl(215 20% 65%);">Out of Stock</div>
+              <div class="quantity-selector" style="opacity: 0.5; pointer-events: none;">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">0</div>
+                <button class="qty-btn add">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 5 -->
+          <div class="product-card selected">
+            <div class="product-image">🍟</div>
+            <div class="product-info">
+              <div class="product-name">Doritos 75g</div>
+              <div class="product-price">$2.20</div>
+              <div class="product-stock">In Stock</div>
+              <div class="quantity-selector">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">1</div>
+                <button class="qty-btn add">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 6 -->
+          <div class="product-card">
+            <div class="product-image">🍪</div>
+            <div class="product-info">
+              <div class="product-name">Oreo Cookies</div>
+              <div class="product-price">$3.50</div>
+              <div class="product-stock">In Stock</div>
+              <div class="quantity-selector">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">0</div>
+                <button class="qty-btn add">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Cart & Recommendations -->
+      <div class="right-panel">
+        <!-- Cart Section -->
+        <div class="cart-section">
+          <div class="cart-header">
+            <div class="cart-title">Current Order</div>
+            <div class="customer-badge">
+              Bodega Nueva
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="cart-items">
+            <div class="cart-item">
+              <div class="cart-item-info">
+                <div class="cart-item-name">Coca Cola 1L</div>
+                <div class="cart-item-price">$2.50 each</div>
+              </div>
+              <div class="cart-item-qty">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">2</div>
+                <button class="qty-btn add">+</button>
+              </div>
+              <div class="cart-item-total">$5.00</div>
+            </div>
+
+            <div class="cart-item">
+              <div class="cart-item-info">
+                <div class="cart-item-name">Lay's Chips 50g</div>
+                <div class="cart-item-price">$1.80 each</div>
+              </div>
+              <div class="cart-item-qty">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">1</div>
+                <button class="qty-btn add">+</button>
+              </div>
+              <div class="cart-item-total">$1.80</div>
+            </div>
+
+            <div class="cart-item">
+              <div class="cart-item-info">
+                <div class="cart-item-name">Doritos 75g</div>
+                <div class="cart-item-price">$2.20 each</div>
+              </div>
+              <div class="cart-item-qty">
+                <button class="qty-btn">−</button>
+                <div class="qty-display">1</div>
+                <button class="qty-btn add">+</button>
+              </div>
+              <div class="cart-item-total">$2.20</div>
+            </div>
+          </div>
+
+          <div class="cart-total">
+            <div class="total-row">
+              <span>Subtotal</span>
+              <span>$9.00</span>
+            </div>
+            <div class="total-row final">
+              <span>Total</span>
+              <span>$9.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div class="recommendations-section">
+          <div class="recommendations-header">
+            <div class="recommendations-title">Suggested Products</div>
+            <div class="tabs">
+              <div class="tab active">Warehouse Bestsellers</div>
+              <div class="tab">Promotions</div>
+            </div>
+          </div>
+
+          <div class="recommendations-list">
+            <!-- Bestseller 1 -->
+            <div class="recommendation-card">
+              <div class="recommendation-image">🧊</div>
+              <div class="recommendation-info">
+                <div class="recommendation-name">Ice Bags 5kg</div>
+                <div class="recommendation-price">$4.50</div>
+                <div class="recommendation-meta">145 sold this month</div>
+              </div>
+              <button class="add-btn-small">+</button>
+            </div>
+
+            <!-- Bestseller 2 -->
+            <div class="recommendation-card">
+              <div class="recommendation-image">🍺</div>
+              <div class="recommendation-info">
+                <div class="recommendation-name">Beer Pack 6x355ml</div>
+                <div class="recommendation-price">$8.00</div>
+                <div class="recommendation-meta">128 sold this month</div>
+              </div>
+              <button class="add-btn-small">+</button>
+            </div>
+
+            <!-- Bestseller 3 -->
+            <div class="recommendation-card">
+              <div class="recommendation-image">💧</div>
+              <div class="recommendation-info">
+                <div class="recommendation-name">Water Bottle 2L</div>
+                <div class="recommendation-price">$1.20</div>
+                <div class="recommendation-meta">98 sold this month</div>
+              </div>
+              <button class="add-btn-small">+</button>
+            </div>
+
+            <!-- Bestseller 4 -->
+            <div class="recommendation-card">
+              <div class="recommendation-image">🍫</div>
+              <div class="recommendation-info">
+                <div class="recommendation-name">Chocolate Bar Variety</div>
+                <div class="recommendation-price">$3.25</div>
+                <div class="recommendation-meta">87 sold this month</div>
+              </div>
+              <button class="add-btn-small">+</button>
+            </div>
+
+            <!-- Bestseller 5 -->
+            <div class="recommendation-card">
+              <div class="recommendation-image">🚬</div>
+              <div class="recommendation-info">
+                <div class="recommendation-name">Cigarettes Popular Brand</div>
+                <div class="recommendation-price">$5.50</div>
+                <div class="recommendation-meta">76 sold this month</div>
+              </div>
+              <button class="add-btn-small">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Actions -->
+        <div class="floating-actions">
+          <button class="btn btn-secondary">Clear Cart</button>
+          <button class="btn btn-primary">
+            Proceed to Payment
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-label">32_WalkIn_Order_Placement</div>
+</body>
+</html>

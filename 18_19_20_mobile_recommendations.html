@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Smart Recommendations Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+      display: flex;
+      gap: 30px;
+      padding: 40px 20px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .mobile-frame {
+      width: 375px;
+      background: hsl(222 47% 11%);
+      border: 8px solid #333;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+    .mobile-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 24px;
+      background: #333;
+      border-radius: 0 0 16px 16px;
+      z-index: 100;
+    }
+    .mobile-screen {
+      height: 812px;
+      overflow-y: auto;
+      background: hsl(222 47% 11%);
+    }
+    .mobile-screen::-webkit-scrollbar {
+      width: 0;
+    }
+    .top-bar {
+      background: hsl(222 47% 14%);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .back-btn, .customer-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .top-bar-title {
+      font-size: 15px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 220px;
+    }
+    .tab-bar {
+      background: hsl(222 47% 14%);
+      display: flex;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      position: sticky;
+      top: 56px;
+      z-index: 19;
+    }
+    .tab {
+      flex: 1;
+      padding: 14px 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      color: hsl(199 89% 48%);
+    }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: hsl(199 89% 48%);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .product-list {
+      padding: 0 16px 100px;
+    }
+    .product-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-height: 100px;
+      position: relative;
+    }
+    .product-image {
+      width: 56px;
+      height: 56px;
+      background: hsl(217 33% 22%);
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(215 20% 65%);
+    }
+    .product-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .product-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .product-meta {
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .product-price {
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .add-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: hsl(199 89% 48%);
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .add-btn:active {
+      transform: scale(0.95);
+    }
+    .add-btn.added {
+      background: hsl(142 71% 45%);
+    }
+    .discount-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: hsl(0 84% 60%);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .price-strike {
+      text-decoration: line-through;
+      color: hsl(215 20% 65%);
+      font-size: 13px;
+    }
+    .sale-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: hsl(142 71% 45%);
+    }
+    .promo-validity {
+      font-size: 11px;
+      color: hsl(30 100% 50%);
+      margin-top: 2px;
+    }
+    .view-details-btn {
+      padding: 8px 16px;
+      background: hsl(217 33% 22%);
+      border: none;
+      border-radius: 6px;
+      color: hsl(210 40% 98%);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .cart-bar {
+      position: fixed;
+      bottom: 64px;
+      left: 0;
+      right: 0;
+      background: hsl(222 47% 14%);
+      border-top: 1px solid hsl(217 33% 22%);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cart-summary {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .view-cart-btn {
+      padding: 10px 20px;
+      background: hsl(199 89% 48%);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background: hsl(222 47% 14%);
+      border-top: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 8px;
+    }
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item.active .nav-icon {
+      color: hsl(199 89% 48%);
+    }
+    .nav-label {
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item.active .nav-label {
+      color: hsl(199 89% 48%);
+    }
+    .screen-label {
+      text-align: center;
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Frame 1: Reorder Tab -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">18_Mobile_Recommendations_Reorder</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="top-bar-title">Recommendations for Tienda García</div>
+        <div class="customer-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <div class="tab active">Reorder</div>
+        <div class="tab">Popular</div>
+        <div class="tab">Promotions</div>
+      </div>
+
+      <!-- Section Header -->
+      <div class="section-header">
+        <span>Your frequent purchases</span>
+        <span>Last 60 days</span>
+      </div>
+
+      <!-- Product List -->
+      <div class="product-list">
+        <!-- Product 1 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Coca Cola 1L</div>
+            <div class="product-meta">Ordered 8 times in 60 days</div>
+            <div class="product-price">$2.50</div>
+          </div>
+          <button class="add-btn">+</button>
+        </div>
+
+        <!-- Product 2 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Lay's Chips 150g</div>
+            <div class="product-meta">Ordered 6 times in 60 days</div>
+            <div class="product-price">$1.80</div>
+          </div>
+          <button class="add-btn added">✓</button>
+        </div>
+
+        <!-- Product 3 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Sprite 1L</div>
+            <div class="product-meta">Ordered 5 times in 60 days</div>
+            <div class="product-price">$2.30</div>
+          </div>
+          <button class="add-btn">+</button>
+        </div>
+
+        <!-- Product 4 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Oreo Original 154g</div>
+            <div class="product-meta">Ordered 4 times in 60 days</div>
+            <div class="product-price">$3.20</div>
+          </div>
+          <button class="add-btn">+</button>
+        </div>
+      </div>
+
+      <!-- Cart Bar -->
+      <div class="cart-bar">
+        <div class="cart-summary">1 item • $1.80</div>
+        <button class="view-cart-btn">
+          View Cart
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span class="nav-label">Home</span>
+        </div>
+        
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span class="nav-label">Tasks</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-label">More</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 2: Popular Tab -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">19_Mobile_Recommendations_Popular</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="top-bar-title">Recommendations for Tienda García</div>
+        <div class="customer-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <div class="tab">Reorder</div>
+        <div class="tab active">Popular</div>
+        <div class="tab">Promotions</div>
+      </div>
+
+      <!-- Section Header -->
+      <div class="section-header">
+        <span>Route bestsellers this month</span>
+      </div>
+
+      <!-- Product List -->
+      <div class="product-list">
+        <!-- Product 1 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Pepsi 2L</div>
+            <div class="product-meta">45 stores ordered this month</div>
+            <div class="product-price">$3.00</div>
+          </div>
+          <button class="add-btn">+</button>
+        </div>
+
+        <!-- Product 2 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Doritos Nacho 200g</div>
+            <div class="product-meta">38 stores ordered this month</div>
+            <div class="product-price">$2.80</div>
+          </div>
+          <button class="add-btn">+</button>
+        </div>
+
+        <!-- Product 3 -->
+        <div class="product-card">
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Red Bull 250ml</div>
+            <div class="product-meta">32 stores ordered this month</div>
+            <div class="product-price">$2.50</div>
+          </div>
+          <button class="add-btn added">✓</button>
+        </div>
+      </div>
+
+      <!-- Cart Bar -->
+      <div class="cart-bar">
+        <div class="cart-summary">1 item • $2.50</div>
+        <button class="view-cart-btn">
+          View Cart
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span class="nav-label">Home</span>
+        </div>
+        
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span class="nav-label">Tasks</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-label">More</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 3: Promotions Tab -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">20_Mobile_Recommendations_Promotions</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="top-bar-title">Recommendations for Tienda García</div>
+        <div class="customer-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <div class="tab">Reorder</div>
+        <div class="tab">Popular</div>
+        <div class="tab active">Promotions</div>
+      </div>
+
+      <!-- Section Header -->
+      <div class="section-header">
+        <span>Active promotions</span>
+      </div>
+
+      <!-- Product List -->
+      <div class="product-list">
+        <!-- Product 1 with Promo -->
+        <div class="product-card">
+          <div class="discount-badge">-20%</div>
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Coca Cola 2L</div>
+            <div class="product-meta">
+              <span class="price-strike">$3.00</span>
+            </div>
+            <div class="sale-price">$2.40</div>
+            <div class="promo-validity">Valid until Jan 31</div>
+          </div>
+          <button class="view-details-btn">View Details</button>
+        </div>
+
+        <!-- Product 2 with Promo -->
+        <div class="product-card">
+          <div class="discount-badge">-15%</div>
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Pringles Original 158g</div>
+            <div class="product-meta">
+              <span class="price-strike">$4.00</span>
+            </div>
+            <div class="sale-price">$3.40</div>
+            <div class="promo-validity">Valid until Feb 15</div>
+          </div>
+          <button class="view-details-btn">View Details</button>
+        </div>
+
+        <!-- Product 3 with Promo -->
+        <div class="product-card">
+          <div class="discount-badge">-25%</div>
+          <div class="product-image">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="product-info">
+            <div class="product-name">Snickers Multipack</div>
+            <div class="product-meta">
+              <span class="price-strike">$5.00</span>
+            </div>
+            <div class="sale-price">$3.75</div>
+            <div class="promo-validity">Valid until Jan 31</div>
+          </div>
+          <button class="view-details-btn">View Details</button>
+        </div>
+      </div>
+
+      <!-- Cart Bar -->
+      <div class="cart-bar">
+        <div class="cart-summary">3 items • $12.50</div>
+        <button class="view-cart-btn">
+          View Cart
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span class="nav-label">Home</span>
+        </div>
+        
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span class="nav-label">Tasks</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-label">More</span>
+        </div>
+        
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

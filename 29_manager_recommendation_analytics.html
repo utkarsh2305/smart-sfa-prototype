@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Recommendation Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+    }
+    .dashboard {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 240px;
+      background: hsl(222 47% 14%);
+      border-right: 1px solid hsl(217 33% 22%);
+      padding: 20px;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      color: hsl(199 89% 48%);
+    }
+    .nav-section {
+      margin-bottom: 24px;
+    }
+    .nav-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: hsl(215 20% 65%);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+      color: hsl(215 20% 65%);
+    }
+    .nav-item:hover {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+    }
+    .nav-item.active {
+      background: hsl(199 89% 48% / 0.15);
+      color: hsl(199 89% 48%);
+    }
+    .main-content {
+      margin-left: 240px;
+      flex: 1;
+      padding: 32px 40px;
+      max-width: calc(1440px - 240px);
+    }
+    .breadcrumb {
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+      margin-bottom: 8px;
+    }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .date-selector {
+      height: 40px;
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+      min-width: 160px;
+    }
+    .export-btn {
+      height: 40px;
+      padding: 0 20px;
+      background: hsl(217 33% 22%);
+      border: 1px solid hsl(217 33% 27%);
+      border-radius: 8px;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .export-btn:hover {
+      background: hsl(217 33% 27%);
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .metric-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 24px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+    }
+    .metric-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .metric-icon.primary {
+      background: hsl(199 89% 48% / 0.15);
+      color: hsl(199 89% 48%);
+    }
+    .metric-icon.green {
+      background: hsl(142 71% 45% / 0.15);
+      color: hsl(142 71% 45%);
+    }
+    .metric-value {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .metric-label {
+      font-size: 14px;
+      color: hsl(215 20% 65%);
+      margin-bottom: 8px;
+    }
+    .metric-subtext {
+      font-size: 13px;
+      color: hsl(215 20% 65%);
+    }
+    .trend-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: hsl(142 71% 45%);
+      margin-top: 8px;
+    }
+    .chart-section {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .chart-heading {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .bar-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .bar-label {
+      width: 180px;
+      font-size: 14px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .bar-track {
+      flex: 1;
+      height: 32px;
+      background: hsl(217 33% 22%);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+      transition: width 0.5s ease;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .bar-fill.green {
+      background: hsl(142 71% 45%);
+    }
+    .bar-fill.blue {
+      background: hsl(199 89% 48%);
+    }
+    .bar-fill.orange {
+      background: hsl(30 100% 50%);
+    }
+    .table-container {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .table thead {
+      background: hsl(222 47% 16%);
+    }
+    .table th {
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: hsl(215 20% 65%);
+      border-bottom: 1px solid hsl(217 33% 22%);
+    }
+    .table tbody tr {
+      border-bottom: 1px solid hsl(217 33% 22%);
+    }
+    .table tbody tr:nth-child(even) {
+      background: hsl(222 47% 12%);
+    }
+    .table tbody tr:hover {
+      background: hsl(217 33% 17%);
+    }
+    .table td {
+      padding: 16px 20px;
+      font-size: 14px;
+    }
+    .agent-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: hsl(199 89% 48%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+    }
+    .top-performer {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .star-icon {
+      color: hsl(45 93% 47%);
+    }
+    .progress-circle {
+      width: 40px;
+      height: 40px;
+      position: relative;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    .progress-ring-circle {
+      fill: none;
+      stroke: hsl(217 33% 22%);
+      stroke-width: 4;
+    }
+    .progress-ring-progress {
+      fill: none;
+      stroke: hsl(142 71% 45%);
+      stroke-width: 4;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s;
+    }
+    .type-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      background: hsl(199 89% 48% / 0.15);
+      color: hsl(199 89% 48%);
+    }
+    .conversion-cell {
+      display: flex;
+      align-items: center;
+    }
+    .conversion-value {
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .conversion-excellent {
+      color: hsl(142 71% 45%);
+    }
+    .conversion-good {
+      color: hsl(199 89% 48%);
+    }
+    .screen-label {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">Smart SFA</div>
+      
+      <div class="nav-section">
+        <div class="nav-title">Main</div>
+        <div class="nav-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          <span>Overview</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">Analytics</div>
+        <div class="nav-item active">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="20" x2="12" y2="10"></line>
+            <line x1="18" y1="20" x2="18" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="16"></line>
+          </svg>
+          <span>Recommendations</span>
+        </div>
+        <div class="nav-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+          <span>Execution</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">Analytics › Recommendations</div>
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1 class="page-title">Recommendation Performance</h1>
+        <div class="header-actions">
+          <select class="date-selector">
+            <option>Last 7 days</option>
+            <option>Last 30 days</option>
+            <option>Last 90 days</option>
+            <option>Custom range</option>
+          </select>
+          <button class="export-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Metrics Grid -->
+      <div class="metrics-grid">
+        <!-- Card 1: View Rate -->
+        <div class="metric-card">
+          <div class="metric-icon primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </div>
+          <div class="metric-value">78%</div>
+          <div class="metric-label">Recommendations Viewed</div>
+          <div class="metric-subtext">234 of 300 visits</div>
+        </div>
+
+        <!-- Card 2: Add-to-Cart Rate -->
+        <div class="metric-card">
+          <div class="metric-icon primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+          </div>
+          <div class="metric-value">45%</div>
+          <div class="metric-label">Products Added from Recommendations</div>
+          <div class="metric-subtext">105 of 234 views</div>
+        </div>
+
+        <!-- Card 3: Conversion Rate -->
+        <div class="metric-card">
+          <div class="metric-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+              <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+          </div>
+          <div class="metric-value">38%</div>
+          <div class="metric-label">Converted to Orders</div>
+          <div class="metric-subtext">89 of 234 views</div>
+          <div class="trend-indicator">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+            ↑ 12% vs last week
+          </div>
+        </div>
+
+        <!-- Card 4: Avg Order Uplift -->
+        <div class="metric-card">
+          <div class="metric-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <div class="metric-value">+$8.50</div>
+          <div class="metric-label">Average Order Value Increase</div>
+          <div class="metric-subtext">With recommendations</div>
+        </div>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="chart-section">
+        <div class="chart-heading">Performance by Recommendation Type</div>
+        <div class="bar-chart">
+          <div class="bar-item">
+            <div class="bar-label">Historical (Past purchases)</div>
+            <div class="bar-track">
+              <div class="bar-fill green" style="width: 90%;">90%</div>
+            </div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-label">Route Trends (Popular on route)</div>
+            <div class="bar-track">
+              <div class="bar-fill blue" style="width: 75%;">75%</div>
+            </div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-label">Promotions (Active discounts)</div>
+            <div class="bar-track">
+              <div class="bar-fill orange" style="width: 50%;">50%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Performance Table -->
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>Views</th>
+              <th>Added to Cart</th>
+              <th>Converted</th>
+              <th>Conversion Rate</th>
+              <th>Best Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1: Top Performer -->
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="avatar" style="background: hsl(142 71% 45%)">MS</div>
+                  <div class="top-performer">
+                    <span>Maria Santos</span>
+                    <svg class="star-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                  </div>
+                </div>
+              </td>
+              <td>45 views</td>
+              <td>40 added (89%)</td>
+              <td>36 orders (80%)</td>
+              <td>
+                <div class="conversion-cell">
+                  <svg class="progress-ring" width="40" height="40">
+                    <circle class="progress-ring-circle" cx="20" cy="20" r="16"></circle>
+                    <circle class="progress-ring-progress" cx="20" cy="20" r="16" 
+                            stroke-dasharray="100.5" 
+                            stroke-dashoffset="20"></circle>
+                  </svg>
+                  <span class="conversion-value conversion-excellent">80%</span>
+                </div>
+              </td>
+              <td><span class="type-badge">Historical</span></td>
+            </tr>
+
+            <!-- Row 2 -->
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="avatar" style="background: hsl(199 89% 48%)">LV</div>
+                  <span>Luis Vargas</span>
+                </div>
+              </td>
+              <td>52 views</td>
+              <td>38 added (73%)</td>
+              <td>35 orders (67%)</td>
+              <td>
+                <div class="conversion-cell">
+                  <svg class="progress-ring" width="40" height="40">
+                    <circle class="progress-ring-circle" cx="20" cy="20" r="16"></circle>
+                    <circle class="progress-ring-progress" cx="20" cy="20" r="16" 
+                            stroke-dasharray="100.5" 
+                            stroke-dashoffset="33"></circle>
+                  </svg>
+                  <span class="conversion-value conversion-good">67%</span>
+                </div>
+              </td>
+              <td><span class="type-badge">Historical</span></td>
+            </tr>
+
+            <!-- Row 3 -->
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="avatar" style="background: hsl(280 70% 55%)">CP</div>
+                  <span>Carlos Pérez</span>
+                </div>
+              </td>
+              <td>38 views</td>
+              <td>22 added (58%)</td>
+              <td>18 orders (47%)</td>
+              <td>
+                <div class="conversion-cell">
+                  <svg class="progress-ring" width="40" height="40">
+                    <circle class="progress-ring-circle" cx="20" cy="20" r="16"></circle>
+                    <circle class="progress-ring-progress" cx="20" cy="20" r="16" 
+                            stroke-dasharray="100.5" 
+                            stroke-dashoffset="53"></circle>
+                  </svg>
+                  <span class="conversion-value conversion-good">47%</span>
+                </div>
+              </td>
+              <td><span class="type-badge">Route Trends</span></td>
+            </tr>
+
+            <!-- Row 4 -->
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="avatar" style="background: hsl(30 80% 55%)">AS</div>
+                  <span>Ana Silva</span>
+                </div>
+              </td>
+              <td>41 views</td>
+              <td>18 added (44%)</td>
+              <td>14 orders (34%)</td>
+              <td>
+                <div class="conversion-cell">
+                  <svg class="progress-ring" width="40" height="40">
+                    <circle class="progress-ring-circle" cx="20" cy="20" r="16"></circle>
+                    <circle class="progress-ring-progress" cx="20" cy="20" r="16" 
+                            stroke-dasharray="100.5" 
+                            stroke-dashoffset="66"></circle>
+                  </svg>
+                  <span class="conversion-value">34%</span>
+                </div>
+              </td>
+              <td><span class="type-badge">Promotions</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-label">29_Manager_Recommendation_Analytics</div>
+</body>
+</html>

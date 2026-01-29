@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Create Customer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: hsl(222 47% 11% / 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+    .modal-content {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease-out;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .input-field {
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 10px 12px 10px 40px;
+      height: 40px;
+      width: 100%;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+      box-shadow: 0 0 0 3px hsl(199 89% 48% / 0.1);
+    }
+    .input-field::placeholder {
+      color: hsl(215 20% 65%);
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: hsl(215 20% 65%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+    textarea.input-field {
+      padding: 12px;
+      height: auto;
+      min-height: 72px;
+      resize: none;
+      line-height: 1.5;
+    }
+    .btn {
+      height: 40px;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      width: 100%;
+    }
+    .btn-primary {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: hsl(199 89% 55%);
+    }
+    .btn-secondary {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+      border: 1px solid hsl(217 33% 22%);
+    }
+    .btn-secondary:hover {
+      background: hsl(217 33% 27%);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(210 40% 98%);
+      margin-bottom: 8px;
+    }
+    .required {
+      color: hsl(0 84% 60%);
+    }
+    .close-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+    .close-btn:hover {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+    }
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .phone-input-group {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 8px;
+    }
+    select.input-field {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+    .phone-input-group select {
+      padding-left: 12px;
+    }
+    .upload-area {
+      background: hsl(217 33% 17%);
+      border: 2px dashed hsl(217 33% 22%);
+      border-radius: 8px;
+      height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-area:hover {
+      border-color: hsl(199 89% 48%);
+      background: hsl(199 89% 48% / 0.05);
+    }
+    .upload-icon {
+      width: 32px;
+      height: 32px;
+      color: hsl(215 20% 65%);
+    }
+    .upload-text {
+      font-size: 14px;
+      color: hsl(210 40% 98%);
+    }
+    .upload-subtext {
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .route-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .route-chip {
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .route-chip:hover {
+      border-color: hsl(199 89% 48% / 0.5);
+    }
+    .route-chip.selected {
+      background: hsl(199 89% 48% / 0.1);
+      border-color: hsl(199 89% 48%);
+    }
+    .route-chip input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: hsl(199 89% 48%);
+      cursor: pointer;
+    }
+    .route-chip-label {
+      font-size: 14px;
+      color: hsl(210 40% 98%);
+      flex: 1;
+    }
+    .route-chip-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: hsl(217 33% 22%);
+      color: hsl(215 20% 65%);
+    }
+    .info-box {
+      background: hsl(45 93% 58% / 0.1);
+      border: 1px solid hsl(45 93% 58% / 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: hsl(210 40% 98%);
+      line-height: 1.5;
+      margin-top: 24px;
+    }
+    .warning-icon {
+      width: 16px;
+      height: 16px;
+      color: hsl(45 93% 58%);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .footer-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 32px;
+    }
+    .footer-buttons .btn {
+      width: auto;
+      min-width: 140px;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-backdrop">
+    <div class="modal-content">
+      <!-- Close Button -->
+      <button class="close-btn" onclick="alert('Modal closed')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div style="margin-bottom: 32px;">
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Create Customer</h2>
+        <p style="font-size: 14px; color: hsl(215 20% 65%);">Add a new outlet/retailer with location details</p>
+      </div>
+
+      <!-- Form -->
+      <form onsubmit="event.preventDefault(); alert('Customer created successfully!');">
+        <!-- Customer Name -->
+        <div class="form-group">
+          <label class="form-label">
+            Customer Name <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <input 
+              type="text" 
+              class="input-field" 
+              placeholder="e.g., Tienda García"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Mobile Number -->
+        <div class="form-group">
+          <label class="form-label">
+            Mobile Number <span class="required">*</span>
+          </label>
+          <div class="phone-input-group">
+            <select class="input-field" required>
+              <option value="+51">+51</option>
+              <option value="+57">+57</option>
+              <option value="+52">+52</option>
+              <option value="+55">+55</option>
+            </select>
+            <input 
+              type="tel" 
+              class="input-field" 
+              placeholder="999 123 456"
+              style="padding-left: 12px;"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+          <label class="form-label">
+            Address <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <textarea 
+              class="input-field" 
+              placeholder="Street address, city, postal code"
+              rows="2"
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Tax ID -->
+        <div class="form-group">
+          <label class="form-label">
+            Tax ID / Business Registration <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <input 
+              type="text" 
+              class="input-field" 
+              placeholder="e.g., 20123456789"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- GPS Coordinates -->
+        <div class="form-group">
+          <label class="form-label">
+            GPS Coordinates <span class="required">*</span>
+          </label>
+          <div class="input-row">
+            <input 
+              type="number" 
+              step="any"
+              class="input-field" 
+              placeholder="-12.0505"
+              style="padding-left: 12px;"
+              required
+            />
+            <input 
+              type="number" 
+              step="any"
+              class="input-field" 
+              placeholder="-77.0445"
+              style="padding-left: 12px;"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Capture from Map Button -->
+        <div class="form-group">
+          <button type="button" class="btn btn-secondary" onclick="alert('Opening map picker...')">
+            📍 Capture from Map
+          </button>
+        </div>
+
+        <!-- Shop Photo -->
+        <div class="form-group">
+          <label class="form-label">Shop Photo</label>
+          <label class="upload-area" for="photo-upload">
+            <input type="file" id="photo-upload" accept="image/*" style="display: none;" />
+            <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span class="upload-text">Click to upload or drag photo</span>
+            <span class="upload-subtext">GPS will be extracted from photo metadata</span>
+          </label>
+        </div>
+
+        <!-- Assign to Routes -->
+        <div class="form-group">
+          <label class="form-label">Assign to Routes (optional)</label>
+          <div class="route-chips">
+            <label class="route-chip selected" onclick="this.classList.toggle('selected')">
+              <input type="checkbox" checked onchange="event.stopPropagation()" />
+              <span class="route-chip-label">North Lima - Delivery</span>
+              <span class="route-chip-badge">Delivery</span>
+            </label>
+            <label class="route-chip" onclick="this.classList.toggle('selected')">
+              <input type="checkbox" onchange="event.stopPropagation()" />
+              <span class="route-chip-label">North Lima - Sales</span>
+              <span class="route-chip-badge">Sales</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+          <svg class="warning-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <div>
+            Customer will be created with <strong>KYC Pending</strong> status. They can place orders immediately.
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="footer-buttons">
+          <button type="button" class="btn btn-secondary" onclick="alert('Cancelling')">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Create Customer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

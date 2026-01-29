@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Create Warehouse Step 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: hsl(222 47% 11% / 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+    .modal-content {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease-out;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .input-field {
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 10px 12px;
+      height: 40px;
+      width: 100%;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+      box-shadow: 0 0 0 3px hsl(199 89% 48% / 0.1);
+    }
+    .input-field::placeholder {
+      color: hsl(215 20% 65%);
+    }
+    .btn {
+      height: 40px;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      width: 100%;
+    }
+    .btn-primary {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: hsl(199 89% 55%);
+    }
+    .btn-primary:active {
+      background: hsl(199 89% 42%);
+    }
+    .btn-secondary {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+      border: 1px solid hsl(217 33% 22%);
+    }
+    .btn-secondary:hover {
+      background: hsl(217 33% 27%);
+    }
+    .progress-stepper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 32px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .step-number.active {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .step-number.completed {
+      background: hsl(142 71% 45%);
+      color: white;
+    }
+    .step-number.inactive {
+      background: hsl(217 33% 22%);
+      color: hsl(215 20% 65%);
+    }
+    .step-label {
+      font-size: 14px;
+      color: hsl(215 20% 65%);
+    }
+    .step-label.active {
+      color: hsl(210 40% 98%);
+      font-weight: 500;
+    }
+    .step-label.completed {
+      color: hsl(142 71% 45%);
+    }
+    .step-line {
+      width: 60px;
+      height: 2px;
+      background: hsl(217 33% 22%);
+    }
+    .step-line.completed {
+      background: hsl(142 71% 45%);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(210 40% 98%);
+      margin-bottom: 8px;
+    }
+    .required {
+      color: hsl(0 84% 60%);
+    }
+    .close-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+    .close-btn:hover {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+    }
+    .section-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(210 40% 98%);
+      margin-bottom: 16px;
+    }
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .map-preview {
+      width: 100%;
+      height: 200px;
+      background: hsl(217 33% 17%);
+      border: 2px dashed hsl(217 33% 22%);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: hsl(215 20% 65%);
+      font-size: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .map-preview::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(hsl(217 33% 22% / 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, hsl(217 33% 22% / 0.3) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .map-pin {
+      position: relative;
+      z-index: 1;
+    }
+    .capacity-input-group {
+      display: grid;
+      grid-template-columns: 70% 30%;
+      gap: 8px;
+    }
+    select.input-field {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+    .footer-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 32px;
+    }
+    .footer-buttons .btn {
+      width: auto;
+      min-width: 120px;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-backdrop">
+    <div class="modal-content">
+      <!-- Close Button -->
+      <button class="close-btn" onclick="alert('Modal closed')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div style="margin-bottom: 8px;">
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Add Warehouse</h2>
+        <p style="font-size: 14px; color: hsl(215 20% 65%);">Configure warehouse location and details</p>
+      </div>
+
+      <!-- Progress Stepper -->
+      <div class="progress-stepper">
+        <div class="step">
+          <div class="step-number completed">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <span class="step-label completed">Warehouse Info</span>
+        </div>
+        <div class="step-line completed"></div>
+        <div class="step">
+          <div class="step-number active">2</div>
+          <span class="step-label active">GPS Location</span>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form onsubmit="event.preventDefault(); alert('Warehouse created successfully!');">
+        <!-- GPS Coordinates Section -->
+        <div class="section-header">GPS Coordinates</div>
+
+        <!-- Latitude & Longitude Inputs -->
+        <div class="form-group">
+          <div class="input-row">
+            <div>
+              <label class="form-label">
+                Latitude <span class="required">*</span>
+              </label>
+              <input 
+                type="number" 
+                step="any"
+                class="input-field" 
+                placeholder="-12.0464"
+                required
+              />
+            </div>
+            <div>
+              <label class="form-label">
+                Longitude <span class="required">*</span>
+              </label>
+              <input 
+                type="number" 
+                step="any"
+                class="input-field" 
+                placeholder="-77.0428"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Use Current Location Button -->
+        <div class="form-group">
+          <button type="button" class="btn btn-secondary" onclick="alert('Getting current location...')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="3"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            Use Current Location
+          </button>
+        </div>
+
+        <!-- Map Preview -->
+        <div class="form-group">
+          <div class="map-preview">
+            <svg class="map-pin" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="hsl(199 89% 48%)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span style="position: relative; z-index: 1;">Map preview will appear here</span>
+          </div>
+        </div>
+
+        <!-- Storage Capacity -->
+        <div class="form-group">
+          <label class="form-label">Storage Capacity (optional)</label>
+          <div class="capacity-input-group">
+            <input 
+              type="number" 
+              class="input-field" 
+              placeholder="10000"
+            />
+            <select class="input-field" style="padding-left: 12px;">
+              <option value="units">units</option>
+              <option value="m3">m³</option>
+              <option value="kg">kg</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="footer-buttons">
+          <button type="button" class="btn btn-secondary" onclick="alert('Going back to Step 1')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Create Warehouse
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

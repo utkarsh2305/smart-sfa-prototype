@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Complete Visit Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+      display: flex;
+      gap: 30px;
+      padding: 40px 20px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .mobile-frame {
+      width: 375px;
+      background: hsl(222 47% 11%);
+      border: 8px solid #333;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+    .mobile-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 24px;
+      background: #333;
+      border-radius: 0 0 16px 16px;
+      z-index: 100;
+    }
+    .mobile-screen {
+      height: 812px;
+      overflow-y: auto;
+      background: hsl(222 47% 11%);
+    }
+    .mobile-screen::-webkit-scrollbar {
+      width: 0;
+    }
+    .top-bar {
+      background: hsl(222 47% 14%);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .back-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .top-bar-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .content-area {
+      padding: 16px;
+      padding-bottom: 120px;
+    }
+    .visit-summary-card {
+      background: hsl(222 47% 16%);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .customer-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: hsl(215 20% 65%);
+    }
+    .duration {
+      font-size: 18px;
+      font-weight: 700;
+      color: hsl(142 71% 45%);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid hsl(217 33% 22%);
+    }
+    .section-heading {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .activities-section {
+      margin-bottom: 20px;
+    }
+    .activity-item {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .activity-icon {
+      width: 24px;
+      height: 24px;
+      color: hsl(142 71% 45%);
+      flex-shrink: 0;
+    }
+    .activity-text {
+      flex: 1;
+      font-size: 14px;
+    }
+    .notes-section {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .notes-textarea {
+      width: 100%;
+      min-height: 80px;
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 12px;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      resize: vertical;
+    }
+    .notes-textarea:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+    }
+    .notes-textarea::placeholder {
+      color: hsl(215 20% 65%);
+    }
+    .photos-section {
+      margin-bottom: 20px;
+    }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .photo-add-btn {
+      aspect-ratio: 1;
+      background: hsl(222 47% 14%);
+      border: 2px dashed hsl(217 33% 22%);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .photo-add-btn:active {
+      transform: scale(0.98);
+    }
+    .camera-icon {
+      width: 32px;
+      height: 32px;
+      color: hsl(215 20% 65%);
+    }
+    .photo-add-text {
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .warning-card {
+      background: hsl(45 93% 47% / 0.1);
+      border: 1px solid hsl(45 93% 47% / 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+    }
+    .warning-icon {
+      width: 24px;
+      height: 24px;
+      color: hsl(45 93% 47%);
+      flex-shrink: 0;
+    }
+    .warning-text {
+      font-size: 13px;
+      color: hsl(45 93% 47%);
+      line-height: 1.4;
+    }
+    .complete-button {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      width: calc(100% - 32px);
+      max-width: 343px;
+      height: 56px;
+      background: hsl(199 89% 48%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s;
+    }
+    .complete-button:active {
+      transform: scale(0.98);
+      background: hsl(199 89% 42%);
+    }
+    .button-subtext {
+      position: fixed;
+      bottom: 76px;
+      left: 16px;
+      right: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .success-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 56px);
+      padding: 40px 20px;
+    }
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      background: hsl(142 71% 45% / 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(142 71% 45%);
+      margin-bottom: 24px;
+    }
+    .success-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .stats-card {
+      background: hsl(222 47% 14%);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .stat-row:last-child {
+      margin-bottom: 0;
+    }
+    .stat-label {
+      color: hsl(215 20% 65%);
+    }
+    .stat-value {
+      font-weight: 600;
+    }
+    .back-to-plan-button {
+      width: 100%;
+      max-width: 320px;
+      height: 56px;
+      background: hsl(199 89% 48%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .back-to-plan-button:active {
+      transform: scale(0.98);
+      background: hsl(199 89% 42%);
+    }
+    .screen-label {
+      text-align: center;
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Frame 1: Complete Visit Form -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">24_Mobile_Visit_Complete_Form</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="back-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="top-bar-title">Complete Visit</div>
+        <div style="width: 32px;"></div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Visit Summary Card -->
+        <div class="visit-summary-card">
+          <div class="customer-name">Tienda García</div>
+          <div class="time-row">
+            <span>Check-in:</span>
+            <span>10:15 AM</span>
+          </div>
+          <div class="time-row">
+            <span>Current time:</span>
+            <span>10:47 AM</span>
+          </div>
+          <div class="duration">Duration: 32 minutes</div>
+        </div>
+
+        <!-- Visit Activities -->
+        <div class="activities-section">
+          <div class="section-heading">Visit Activities</div>
+          
+          <div class="activity-item">
+            <svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <div class="activity-text">Checked in (with GPS)</div>
+          </div>
+
+          <div class="activity-item">
+            <svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <div class="activity-text">Viewed recommendations</div>
+          </div>
+
+          <div class="activity-item">
+            <svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <div class="activity-text">Placed order #ORD-123 ($13.75)</div>
+          </div>
+
+          <div class="activity-item">
+            <svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <div class="activity-text">Collected payment (Cash - $13.75)</div>
+          </div>
+        </div>
+
+        <!-- Add Notes -->
+        <div class="notes-section">
+          <label class="form-label">Visit Notes (optional)</label>
+          <textarea 
+            class="notes-textarea" 
+            placeholder="Add notes about this visit..."
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Upload Photos -->
+        <div class="photos-section">
+          <label class="form-label">Photos (optional)</label>
+          <div class="photo-grid">
+            <div class="photo-add-btn">
+              <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <div class="photo-add-text">Add Photo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning Card (shown if visit < 60 sec) -->
+        <div class="warning-card">
+          <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <div class="warning-text">
+            This visit was very short (32 sec). Consider adding a note or photo to explain.
+          </div>
+        </div>
+      </div>
+
+      <!-- Button Subtext -->
+      <div class="button-subtext">
+        This will end the visit and save all data
+      </div>
+
+      <!-- Complete Button -->
+      <button class="complete-button">
+        Complete Visit
+      </button>
+    </div>
+  </div>
+
+  <!-- Frame 2: Visit Success -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"></div>
+    <div class="mobile-screen">
+      <div class="screen-label" style="padding-top: 32px;">25_Mobile_Visit_Success</div>
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div style="width: 32px;"></div>
+        <div class="top-bar-title">Visit Complete</div>
+        <div style="width: 32px;"></div>
+      </div>
+
+      <!-- Success Container -->
+      <div class="success-container">
+        <!-- Success Icon -->
+        <div class="success-icon">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+
+        <!-- Success Title -->
+        <div class="success-title">Visit Completed!</div>
+
+        <!-- Stats Card -->
+        <div class="stats-card">
+          <div class="stat-row">
+            <span class="stat-label">Customer:</span>
+            <span class="stat-value">Tienda García</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Duration:</span>
+            <span class="stat-value">32 minutes</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Order placed:</span>
+            <span class="stat-value">#ORD-123</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Payment collected:</span>
+            <span class="stat-value">$13.75</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Activities:</span>
+            <span class="stat-value">4 completed</span>
+          </div>
+        </div>
+
+        <!-- Back to Plan Button -->
+        <button class="back-to-plan-button">
+          Back to Today's Plan
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

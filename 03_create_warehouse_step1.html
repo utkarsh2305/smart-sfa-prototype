@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Create Warehouse Step 1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: hsl(222 47% 11% / 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+    .modal-content {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease-out;
+      position: relative;
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .input-field {
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 10px 12px 10px 40px;
+      height: 40px;
+      width: 100%;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+      box-shadow: 0 0 0 3px hsl(199 89% 48% / 0.1);
+    }
+    .input-field::placeholder {
+      color: hsl(215 20% 65%);
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: hsl(215 20% 65%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+    textarea.input-field {
+      padding: 12px;
+      height: auto;
+      min-height: 88px;
+      resize: none;
+      line-height: 1.5;
+    }
+    .btn {
+      height: 40px;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+    }
+    .btn-primary {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: hsl(199 89% 55%);
+    }
+    .btn-primary:active {
+      background: hsl(199 89% 42%);
+    }
+    .btn-secondary {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+    }
+    .btn-secondary:hover {
+      background: hsl(217 33% 27%);
+    }
+    .progress-stepper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 32px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .step-number.active {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .step-number.inactive {
+      background: hsl(217 33% 22%);
+      color: hsl(215 20% 65%);
+    }
+    .step-label {
+      font-size: 14px;
+      color: hsl(215 20% 65%);
+    }
+    .step-label.active {
+      color: hsl(210 40% 98%);
+      font-weight: 500;
+    }
+    .step-line {
+      width: 60px;
+      height: 2px;
+      background: hsl(217 33% 22%);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(210 40% 98%);
+      margin-bottom: 8px;
+    }
+    .required {
+      color: hsl(0 84% 60%);
+    }
+    .close-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .close-btn:hover {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-backdrop">
+    <div class="modal-content">
+      <!-- Close Button -->
+      <button class="close-btn" onclick="alert('Modal closed')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div style="margin-bottom: 8px;">
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Add Warehouse</h2>
+        <p style="font-size: 14px; color: hsl(215 20% 65%);">Configure warehouse location and details</p>
+      </div>
+
+      <!-- Progress Stepper -->
+      <div class="progress-stepper">
+        <div class="step">
+          <div class="step-number active">1</div>
+          <span class="step-label active">Warehouse Info</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step">
+          <div class="step-number inactive">2</div>
+          <span class="step-label">GPS Location</span>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form onsubmit="event.preventDefault(); alert('Proceeding to Step 2: GPS Location');">
+        <!-- Warehouse Name -->
+        <div class="form-group">
+          <label class="form-label">
+            Warehouse Name <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <input 
+              type="text" 
+              class="input-field" 
+              placeholder="e.g., Lima North Warehouse"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+          <label class="form-label">
+            Address <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <textarea 
+              class="input-field" 
+              placeholder="Enter warehouse street address"
+              rows="3"
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Region/City -->
+        <div class="form-group">
+          <label class="form-label">Region/City</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <input 
+              type="text" 
+              class="input-field" 
+              placeholder="e.g., Lima, Peru"
+            />
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+          <button type="button" class="btn btn-secondary" onclick="alert('Cancelling and closing modal')">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Next
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

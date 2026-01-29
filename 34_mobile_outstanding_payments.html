@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Outstanding Payments</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+    }
+    .mobile-container {
+      width: 375px;
+      height: 812px;
+      margin: 40px auto;
+      background: hsl(222 47% 11%);
+      border: 8px solid #333;
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 24px;
+      background: #333;
+      border-radius: 0 0 16px 16px;
+      z-index: 100;
+    }
+    .top-bar {
+      height: 56px;
+      background: hsl(222 47% 14%);
+      border-bottom: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .back-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: hsl(215 20% 65%);
+    }
+    .back-btn:active {
+      transform: scale(0.95);
+    }
+    .customer-name {
+      font-size: 16px;
+      font-weight: 700;
+      flex: 1;
+      text-align: center;
+      padding-right: 32px;
+    }
+    .content-container {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 200px;
+    }
+    .balance-banner {
+      background: hsl(30 100% 50% / 0.2);
+      border: 1px solid hsl(30 100% 50% / 0.3);
+      border-radius: 12px;
+      margin: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .alert-icon {
+      color: hsl(30 100% 50%);
+    }
+    .balance-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: hsl(30 100% 50%);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .balance-amount {
+      font-size: 36px;
+      font-weight: 700;
+      color: hsl(30 100% 50%);
+    }
+    .balance-subtext {
+      font-size: 13px;
+      color: hsl(215 20% 75%);
+    }
+    .section-header {
+      padding: 16px 16px 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: hsl(215 20% 75%);
+      letter-spacing: 0.5px;
+    }
+    .select-toggle {
+      font-size: 13px;
+      color: hsl(199 89% 48%);
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .select-toggle:active {
+      opacity: 0.7;
+    }
+    .orders-list {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .order-card {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-left: 4px solid hsl(30 100% 50%);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .order-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .order-number {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .order-date {
+      font-size: 12px;
+      color: hsl(215 20% 65%);
+    }
+    .order-body {
+      padding: 16px;
+    }
+    .order-amount {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .order-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    .detail-label {
+      color: hsl(215 20% 65%);
+    }
+    .detail-value {
+      font-weight: 600;
+    }
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+    .status-badge.partial {
+      background: hsl(30 100% 50% / 0.15);
+      color: hsl(30 100% 50%);
+    }
+    .status-badge.credit {
+      background: hsl(0 84% 60% / 0.15);
+      color: hsl(0 84% 60%);
+    }
+    .overdue-text {
+      color: hsl(0 84% 60%);
+      font-weight: 600;
+    }
+    .order-footer {
+      padding: 12px 16px;
+      border-top: 1px solid hsl(217 33% 22%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: hsl(199 89% 48%);
+      cursor: pointer;
+    }
+    .checkbox-label {
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .payment-calculator {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 375px;
+      background: hsl(222 47% 16%);
+      border-top: 1px solid hsl(217 33% 22%);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .calculator-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+    .selected-count {
+      color: hsl(215 20% 75%);
+    }
+    .total-outstanding {
+      font-weight: 700;
+    }
+    .amount-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .input-label {
+      font-size: 12px;
+      color: hsl(215 20% 75%);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .amount-input {
+      width: 100%;
+      height: 56px;
+      background: hsl(217 33% 17%);
+      border: 2px solid hsl(199 89% 48%);
+      border-radius: 8px;
+      padding: 0 16px;
+      font-size: 24px;
+      font-weight: 700;
+      color: hsl(210 40% 98%);
+      text-align: center;
+    }
+    .amount-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px hsl(199 89% 48% / 0.2);
+    }
+    .collect-btn {
+      width: 100%;
+      height: 56px;
+      background: hsl(199 89% 48%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .collect-btn:active {
+      transform: scale(0.98);
+      background: hsl(199 89% 55%);
+    }
+    .screen-label {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: hsl(215 20% 65%);
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <div class="notch"></div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="back-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </div>
+      <div class="customer-name">Tienda García</div>
+    </div>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      <!-- Outstanding Balance Banner -->
+      <div class="balance-banner">
+        <svg class="alert-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div class="balance-label">Outstanding Balance</div>
+        <div class="balance-amount">$150.00</div>
+        <div class="balance-subtext">From 2 previous orders</div>
+      </div>
+
+      <!-- Section Header -->
+      <div class="section-header">
+        <div class="section-title">Unpaid Orders</div>
+        <div class="select-toggle">Select All</div>
+      </div>
+
+      <!-- Orders List -->
+      <div class="orders-list">
+        <!-- Order 1: Partial Paid -->
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-number">#ORD-100</div>
+            <div class="order-date">Jan 20, 2026</div>
+          </div>
+          <div class="order-body">
+            <div class="order-amount">$100.00</div>
+            <div class="order-details">
+              <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="status-badge partial">Partial Paid</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Paid so far</span>
+                <span class="detail-value">$30.00</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Due</span>
+                <span class="detail-value overdue-text">5 days ago</span>
+              </div>
+            </div>
+          </div>
+          <div class="order-footer">
+            <input type="checkbox" id="order-1" class="checkbox" checked>
+            <label for="order-1" class="checkbox-label">Include in payment</label>
+          </div>
+        </div>
+
+        <!-- Order 2: Credit -->
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-number">#ORD-095</div>
+            <div class="order-date">Jan 15, 2026</div>
+          </div>
+          <div class="order-body">
+            <div class="order-amount">$50.00</div>
+            <div class="order-details">
+              <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="status-badge credit">Credit</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Paid so far</span>
+                <span class="detail-value">$0.00</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Due</span>
+                <span class="detail-value overdue-text">10 days ago</span>
+              </div>
+            </div>
+          </div>
+          <div class="order-footer">
+            <input type="checkbox" id="order-2" class="checkbox" checked>
+            <label for="order-2" class="checkbox-label">Include in payment</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Calculator (Sticky Bottom) -->
+    <div class="payment-calculator">
+      <div class="calculator-header">
+        <div class="selected-count">2 orders selected</div>
+        <div class="total-outstanding">Total: $150.00</div>
+      </div>
+
+      <div class="amount-input-group">
+        <label class="input-label">Amount to Collect</label>
+        <input 
+          type="number" 
+          class="amount-input" 
+          value="150.00"
+          step="0.01"
+          min="0"
+        >
+      </div>
+
+      <button class="collect-btn">
+        Collect $150.00
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="screen-label">34_Mobile_Outstanding_Payments</div>
+
+  <script>
+    // Simple interactivity for checkboxes
+    const checkboxes = document.querySelectorAll('.checkbox');
+    const selectedCount = document.querySelector('.selected-count');
+    const collectBtn = document.querySelector('.collect-btn');
+    
+    function updateSelection() {
+      const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+      selectedCount.textContent = `${checked} order${checked !== 1 ? 's' : ''} selected`;
+    }
+    
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', updateSelection);
+    });
+  </script>
+</body>
+</html>

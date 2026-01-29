@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Create Route</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(222 47% 11%)',
+            card: 'hsl(222 47% 14%)',
+            border: 'hsl(217 33% 22%)',
+            input: 'hsl(217 33% 17%)',
+            primary: 'hsl(199 89% 48%)',
+            accent: 'hsl(142 71% 45%)',
+            foreground: 'hsl(210 40% 98%)',
+            muted: 'hsl(215 20% 65%)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: hsl(222 47% 11%);
+      color: hsl(210 40% 98%);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: hsl(222 47% 11% / 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+    .modal-content {
+      background: hsl(222 47% 14%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 550px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease-out;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .input-field {
+      background: hsl(217 33% 17%);
+      border: 1px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 10px 12px 10px 40px;
+      height: 40px;
+      width: 100%;
+      color: hsl(210 40% 98%);
+      font-size: 14px;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: hsl(199 89% 48%);
+      box-shadow: 0 0 0 3px hsl(199 89% 48% / 0.1);
+    }
+    .input-field::placeholder {
+      color: hsl(215 20% 65%);
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: hsl(215 20% 65%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+    textarea.input-field {
+      padding: 12px;
+      height: auto;
+      min-height: 72px;
+      resize: none;
+      line-height: 1.5;
+    }
+    .btn {
+      height: 40px;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+    }
+    .btn-primary {
+      background: hsl(199 89% 48%);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: hsl(199 89% 55%);
+    }
+    .btn-secondary {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+    }
+    .btn-secondary:hover {
+      background: hsl(217 33% 27%);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(210 40% 98%);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .required {
+      color: hsl(0 84% 60%);
+    }
+    .close-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: hsl(215 20% 65%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+    .close-btn:hover {
+      background: hsl(217 33% 22%);
+      color: hsl(210 40% 98%);
+    }
+    select.input-field {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+    .task-type-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .task-type-card {
+      background: hsl(217 33% 17%);
+      border: 2px solid hsl(217 33% 22%);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .task-type-card:hover {
+      border-color: hsl(199 89% 48% / 0.5);
+    }
+    .task-type-card.selected {
+      background: hsl(199 89% 48% / 0.1);
+      border-color: hsl(199 89% 48%);
+    }
+    .task-type-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .task-type-icon {
+      width: 32px;
+      height: 32px;
+      color: hsl(215 20% 65%);
+      transition: color 0.2s;
+    }
+    .task-type-card.selected .task-type-icon {
+      color: hsl(199 89% 48%);
+    }
+    .task-type-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: hsl(215 20% 65%);
+      transition: color 0.2s;
+    }
+    .task-type-card.selected .task-type-label {
+      color: hsl(210 40% 98%);
+    }
+    .info-box {
+      background: hsl(199 89% 48% / 0.1);
+      border: 1px solid hsl(199 89% 48% / 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: hsl(210 40% 98%);
+      line-height: 1.5;
+      margin-top: 24px;
+    }
+    .info-icon {
+      width: 16px;
+      height: 16px;
+      color: hsl(199 89% 48%);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .tooltip-icon {
+      width: 14px;
+      height: 14px;
+      color: hsl(215 20% 65%);
+      cursor: help;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-backdrop">
+    <div class="modal-content">
+      <!-- Close Button -->
+      <button class="close-btn" onclick="alert('Modal closed')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div style="margin-bottom: 32px;">
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Create Route</h2>
+        <p style="font-size: 14px; color: hsl(215 20% 65%);">Define a task-specific route within a territory</p>
+      </div>
+
+      <!-- Form -->
+      <form onsubmit="event.preventDefault(); alert('Route created successfully!');">
+        <!-- Route Name -->
+        <div class="form-group">
+          <label class="form-label">
+            Route Name <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <input 
+              type="text" 
+              class="input-field" 
+              placeholder="e.g., North Lima - Delivery"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Task Type -->
+        <div class="form-group">
+          <label class="form-label">
+            Task Type <span class="required">*</span>
+            <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" title="Select the primary purpose of this route">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </label>
+          <div class="task-type-group">
+            <!-- Delivery -->
+            <label class="task-type-card selected" onclick="document.querySelectorAll('.task-type-card').forEach(c => c.classList.remove('selected')); this.classList.add('selected');">
+              <input type="radio" name="taskType" value="delivery" checked required />
+              <svg class="task-type-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+              <span class="task-type-label">Delivery</span>
+            </label>
+
+            <!-- Sales -->
+            <label class="task-type-card" onclick="document.querySelectorAll('.task-type-card').forEach(c => c.classList.remove('selected')); this.classList.add('selected');">
+              <input type="radio" name="taskType" value="sales" required />
+              <svg class="task-type-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+              <span class="task-type-label">Sales</span>
+            </label>
+
+            <!-- Walk-In -->
+            <label class="task-type-card" onclick="document.querySelectorAll('.task-type-card').forEach(c => c.classList.remove('selected')); this.classList.add('selected');">
+              <input type="radio" name="taskType" value="walkin" required />
+              <svg class="task-type-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              <span class="task-type-label">Walk-In</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Territory -->
+        <div class="form-group">
+          <label class="form-label">
+            Territory <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <select 
+              class="input-field" 
+              required
+            >
+              <option value="">Select territory</option>
+              <option value="north-lima" selected>North Lima</option>
+              <option value="south-lima">South Lima</option>
+              <option value="central-lima">Central Lima</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Route Description -->
+        <div class="form-group">
+          <label class="form-label">Route Description</label>
+          <div class="input-wrapper">
+            <textarea 
+              class="input-field" 
+              placeholder="Add notes about this route coverage area"
+              rows="2"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+          <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <div>
+            Task-based routes allow multiple agents to work the same route for different purposes (e.g., delivery + sales)
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+          <button type="button" class="btn btn-secondary" onclick="alert('Cancelling')">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Create Route
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

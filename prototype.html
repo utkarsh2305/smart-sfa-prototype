@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart SFA - Interactive Prototype</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e27;
+      color: #fff;
+      overflow: hidden;
+    }
+    
+    .prototype-container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 300px;
+      background: #1a1f3a;
+      border-right: 1px solid #2a2f4a;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid #2a2f4a;
+    }
+    
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      color: #3b82f6;
+      margin-bottom: 6px;
+    }
+    
+    .subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    .flow-selector {
+      padding: 20px;
+      border-bottom: 1px solid #2a2f4a;
+    }
+    
+    .flow-selector-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    
+    .flow-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .flow-btn {
+      padding: 12px 14px;
+      background: #2a2f4a;
+      border: 1px solid #3a3f5a;
+      border-radius: 6px;
+      color: #9ca3af;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .flow-btn:hover {
+      background: #3a3f5a;
+      color: #fff;
+      transform: translateX(2px);
+    }
+    
+    .flow-btn.active {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border-color: #3b82f6;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .flow-icon {
+      font-size: 18px;
+    }
+    
+    .screens-list {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .flow-section {
+      margin-bottom: 28px;
+    }
+    
+    .flow-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+    
+    .screen-item {
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .screen-item:hover {
+      background: #2a2f4a;
+      color: #fff;
+      transform: translateX(2px);
+    }
+    
+    .screen-item.active {
+      background: #3b82f6;
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    .screen-number {
+      font-weight: 700;
+      color: #3b82f6;
+      min-width: 24px;
+    }
+    
+    .screen-item.active .screen-number {
+      color: #fff;
+    }
+    
+    /* Main Content Area */
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0f1420;
+      position: relative;
+    }
+    
+    .top-bar {
+      height: 64px;
+      background: #1a1f3a;
+      border-bottom: 1px solid #2a2f4a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 10;
+    }
+    
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    
+    .breadcrumb-arrow {
+      color: #4b5563;
+      font-weight: 300;
+    }
+    
+    .current-screen {
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    .top-bar-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .action-btn {
+      padding: 10px 18px;
+      background: #2a2f4a;
+      border: 1px solid #3a3f5a;
+      border-radius: 6px;
+      color: #9ca3af;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .action-btn:hover {
+      background: #3a3f5a;
+      color: #fff;
+      border-color: #4a4f6a;
+    }
+    
+    .action-btn.primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    
+    .action-btn.primary:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Viewport */
+    .viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow: auto;
+      position: relative;
+    }
+    
+    .device-frame {
+      background: #1a1f3a;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    
+    .device-frame.mobile {
+      width: 375px;
+      height: 812px;
+    }
+    
+    .device-frame.desktop {
+      width: 1440px;
+      height: 900px;
+      max-width: 90vw;
+      max-height: 80vh;
+    }
+    
+    .screen-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: hsl(222 47% 11%);
+    }
+    
+    /* Loading State */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 14, 39, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+    
+    .loading-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #3a3f5a;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Flow Indicator */
+    .flow-indicator {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26, 31, 58, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid #2a2f4a;
+      border-radius: 12px;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 100;
+    }
+    
+    .flow-step {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3a3f5a;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    
+    .flow-step:hover {
+      background: #4a4f6a;
+      transform: scale(1.2);
+    }
+    
+    .flow-step.active {
+      background: #3b82f6;
+      width: 28px;
+      border-radius: 4px;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+    }
+    
+    .flow-step.completed {
+      background: #10b981;
+    }
+    
+    /* Help Button */
+    .help-button {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+      transition: all 0.2s;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .help-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 32px rgba(124, 58, 237, 0.6);
+    }
+    
+    /* Info Toast */
+    .info-toast {
+      position: fixed;
+      top: 80px;
+      right: 28px;
+      background: linear-gradient(135deg, #1a1f3a, #2a2f4a);
+      border: 1px solid #3b82f6;
+      border-radius: 12px;
+      padding: 16px 20px;
+      max-width: 400px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      transform: translateX(120%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .info-toast.show {
+      transform: translateX(0);
+    }
+    
+    .toast-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #3b82f6;
+      margin-bottom: 8px;
+    }
+    
+    .toast-content {
+      font-size: 13px;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1600px) {
+      .device-frame.desktop {
+        transform: scale(0.85);
+      }
+    }
+    
+    @media (max-width: 1400px) {
+      .device-frame.desktop {
+        transform: scale(0.7);
+      }
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #1a1f3a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #3a3f5a;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4a4f6a;
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-container">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">Smart SFA</div>
+        <div class="subtitle">Interactive Prototype • 36 Screens</div>
+      </div>
+      
+      <div class="flow-selector">
+        <div class="flow-selector-label">🚀 Quick Start Flows</div>
+        <div class="flow-buttons">
+          <button class="flow-btn active" onclick="startFlow('admin')">
+            <span class="flow-icon">🏢</span>
+            <span>Admin Setup Journey</span>
+          </button>
+          <button class="flow-btn" onclick="startFlow('manager')">
+            <span class="flow-icon">📋</span>
+            <span>Manager Planning</span>
+          </button>
+          <button class="flow-btn" onclick="startFlow('agent')">
+            <span class="flow-icon">📱</span>
+            <span>Field Agent Mobile</span>
+          </button>
+          <button class="flow-btn" onclick="startFlow('monitoring')">
+            <span class="flow-icon">📊</span>
+            <span>Manager Monitoring</span>
+          </button>
+          <button class="flow-btn" onclick="startFlow('walkin')">
+            <span class="flow-icon">🏪</span>
+            <span>Walk-In Sales</span>
+          </button>
+          <button class="flow-btn" onclick="startFlow('advanced')">
+            <span class="flow-icon">⚡</span>
+            <span>Advanced Features</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="screens-list">
+        <div class="flow-section">
+          <div class="flow-section-title">Phase 1: Admin Setup (1-7)</div>
+          <div class="screen-item active" onclick="navigateTo(1)">
+            <span class="screen-number">01</span>
+            <span>Create Organization</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(2)">
+            <span class="screen-number">02</span>
+            <span>Org Setup List</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(3)">
+            <span class="screen-number">03</span>
+            <span>Create Warehouse Step 1</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(4)">
+            <span class="screen-number">04</span>
+            <span>Create Warehouse Step 2</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(5)">
+            <span class="screen-number">05</span>
+            <span>Create Territory</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(6)">
+            <span class="screen-number">06</span>
+            <span>Create Route</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(7)">
+            <span class="screen-number">07</span>
+            <span>Create Customer</span>
+          </div>
+        </div>
+        
+        <div class="flow-section">
+          <div class="flow-section-title">Phase 2: Planning (8-11)</div>
+          <div class="screen-item" onclick="navigateTo(8)">
+            <span class="screen-number">08</span>
+            <span>Create Users & Roles</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(9)">
+            <span class="screen-number">09</span>
+            <span>Daily Plan Builder</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(10)">
+            <span class="screen-number">10</span>
+            <span>Published Plan Summary</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(11)">
+            <span class="screen-number">11</span>
+            <span>Multi-Agent Assignment</span>
+          </div>
+        </div>
+        
+        <div class="flow-section">
+          <div class="flow-section-title">Phase 3: Mobile Agent (12-25)</div>
+          <div class="screen-item" onclick="navigateTo(12)">
+            <span class="screen-number">12</span>
+            <span>Mobile Login</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(13)">
+            <span class="screen-number">13</span>
+            <span>Org Switcher</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(14)">
+            <span class="screen-number">14</span>
+            <span>Today's Plan</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(15)">
+            <span class="screen-number">15</span>
+            <span>Customer Profile</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(16)">
+            <span class="screen-number">16</span>
+            <span>Check-In</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(17)">
+            <span class="screen-number">17</span>
+            <span>Visit In Progress</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(18)">
+            <span class="screen-number">18</span>
+            <span>Recommendations Reorder</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(19)">
+            <span class="screen-number">19</span>
+            <span>Recommendations Popular</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(20)">
+            <span class="screen-number">20</span>
+            <span>Recommendations Promotions</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(21)">
+            <span class="screen-number">21</span>
+            <span>Product Catalog</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(22)">
+            <span class="screen-number">22</span>
+            <span>Cart View</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(23)">
+            <span class="screen-number">23</span>
+            <span>Payment Collection</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(24)">
+            <span class="screen-number">24</span>
+            <span>Visit Complete Form</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(25)">
+            <span class="screen-number">25</span>
+            <span>Visit Success</span>
+          </div>
+        </div>
+        
+        <div class="flow-section">
+          <div class="flow-section-title">Phase 4: Manager Analytics (26-29)</div>
+          <div class="screen-item" onclick="navigateTo(26)">
+            <span class="screen-number">26</span>
+            <span>Execution Dashboard</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(27)">
+            <span class="screen-number">27</span>
+            <span>Agent Detail Visits</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(28)">
+            <span class="screen-number">28</span>
+            <span>Customer Multi-Visit</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(29)">
+            <span class="screen-number">29</span>
+            <span>Recommendation Analytics</span>
+          </div>
+        </div>
+        
+        <div class="flow-section">
+          <div class="flow-section-title">Phase 5: Walk-In Sales (30-32)</div>
+          <div class="screen-item" onclick="navigateTo(30)">
+            <span class="screen-number">30</span>
+            <span>Walk-In Dashboard</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(31)">
+            <span class="screen-number">31</span>
+            <span>Create Walk-In Customer</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(32)">
+            <span class="screen-number">32</span>
+            <span>Order Placement</span>
+          </div>
+        </div>
+        
+        <div class="flow-section">
+          <div class="flow-section-title">Phase 6: Advanced (33-36)</div>
+          <div class="screen-item" onclick="navigateTo(33)">
+            <span class="screen-number">33</span>
+            <span>Create Customer On-Route</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(34)">
+            <span class="screen-number">34</span>
+            <span>Outstanding Payments</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(35)">
+            <span class="screen-number">35</span>
+            <span>Multi-Route Assignment</span>
+          </div>
+          <div class="screen-item" onclick="navigateTo(36)">
+            <span class="screen-number">36</span>
+            <span>Platform Admin Analytics</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="content-area">
+      <div class="top-bar">
+        <div class="breadcrumb">
+          <span id="flowName">Admin Setup Journey</span>
+          <span class="breadcrumb-arrow">›</span>
+          <span class="current-screen" id="screenName">Create Organization</span>
+        </div>
+        
+        <div class="top-bar-actions">
+          <button class="action-btn" id="prevBtn" onclick="previousScreen()">
+            ← Previous
+          </button>
+          <button class="action-btn primary" id="nextBtn" onclick="nextScreen()">
+            Next →
+          </button>
+          <button class="action-btn" onclick="resetFlow()">
+            ↺ Reset
+          </button>
+        </div>
+      </div>
+      
+      <div class="viewport">
+        <div class="device-frame desktop" id="deviceFrame">
+          <iframe 
+            id="screenIframe" 
+            class="screen-iframe"
+            src="01_create_organization_modal.html"
+          ></iframe>
+        </div>
+        
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+        </div>
+      </div>
+      
+      <div class="flow-indicator" id="flowIndicator">
+        <!-- Flow steps dynamically added -->
+      </div>
+    </div>
+  </div>
+  
+  <button class="help-button" onclick="toggleHelp()" title="Help & Shortcuts">
+    ?
+  </button>
+  
+  <div class="info-toast" id="infoToast">
+    <div class="toast-title">💡 Navigation Tips</div>
+    <div class="toast-content">
+      • Click any flow button to start a journey<br>
+      • Use ← → arrow keys to navigate<br>
+      • Click screens in sidebar to jump<br>
+      • Click flow dots to jump to that step<br>
+      • Press R to reset current flow
+    </div>
+  </div>
+  
+  <script>
+    // Screen definitions with actual filenames
+    const screens = {
+      1: { file: '01_create_organization_modal.html', name: 'Create Organization', device: 'desktop', flow: 'admin' },
+      2: { file: '02_org_setup_list_view.html', name: 'Org Setup List', device: 'desktop', flow: 'admin' },
+      3: { file: '03_create_warehouse_step1.html', name: 'Create Warehouse Step 1', device: 'desktop', flow: 'admin' },
+      4: { file: '04_create_warehouse_step2_gps.html', name: 'Create Warehouse Step 2', device: 'desktop', flow: 'admin' },
+      5: { file: '05_create_territory_modal.html', name: 'Create Territory', device: 'desktop', flow: 'admin' },
+      6: { file: '06_create_route_taskbased.html', name: 'Create Route', device: 'desktop', flow: 'admin' },
+      7: { file: '07_create_customer_outlet.html', name: 'Create Customer', device: 'desktop', flow: 'admin' },
+      8: { file: '08_create_user_roles.html', name: 'Create Users & Roles', device: 'desktop', flow: 'manager' },
+      9: { file: '09_manager_daily_plan_builder.html', name: 'Daily Plan Builder', device: 'desktop', flow: 'manager' },
+      10: { file: '10_published_plan_summary.html', name: 'Published Plan Summary', device: 'desktop', flow: 'manager' },
+      11: { file: '11_multi_agent_route_assignment.html', name: 'Multi-Agent Assignment', device: 'desktop', flow: 'manager' },
+      12: { file: '12_13_mobile_login_org_switcher.html', name: 'Mobile Login', device: 'mobile', flow: 'agent' },
+      13: { file: '12_13_mobile_login_org_switcher.html', name: 'Org Switcher', device: 'mobile', flow: 'agent' },
+      14: { file: '14_mobile_todays_plan.html', name: 'Today\'s Plan', device: 'mobile', flow: 'agent' },
+      15: { file: '15_mobile_customer_profile.html', name: 'Customer Profile', device: 'mobile', flow: 'agent' },
+      16: { file: '16_17_mobile_checkin_flow.html', name: 'Check-In', device: 'mobile', flow: 'agent' },
+      17: { file: '16_17_mobile_checkin_flow.html', name: 'Visit In Progress', device: 'mobile', flow: 'agent' },
+      18: { file: '18_19_20_mobile_recommendations.html', name: 'Recommendations Reorder', device: 'mobile', flow: 'agent' },
+      19: { file: '18_19_20_mobile_recommendations.html', name: 'Recommendations Popular', device: 'mobile', flow: 'agent' },
+      20: { file: '18_19_20_mobile_recommendations.html', name: 'Recommendations Promotions', device: 'mobile', flow: 'agent' },
+      21: { file: '21_22_mobile_product_cart.html', name: 'Product Catalog', device: 'mobile', flow: 'agent' },
+      22: { file: '21_22_mobile_product_cart.html', name: 'Cart View', device: 'mobile', flow: 'agent' },
+      23: { file: '23_mobile_payment_collection.html', name: 'Payment Collection', device: 'mobile', flow: 'agent' },
+      24: { file: '24_25_mobile_visit_complete.html', name: 'Visit Complete Form', device: 'mobile', flow: 'agent' },
+      25: { file: '24_25_mobile_visit_complete.html', name: 'Visit Success', device: 'mobile', flow: 'agent' },
+      26: { file: '26_manager_execution_dashboard.html', name: 'Execution Dashboard', device: 'desktop', flow: 'monitoring' },
+      27: { file: '27_manager_agent_detail_visits.html', name: 'Agent Detail Visits', device: 'desktop', flow: 'monitoring' },
+      28: { file: '28_manager_customer_multivisit.html', name: 'Customer Multi-Visit', device: 'desktop', flow: 'monitoring' },
+      29: { file: '29_manager_recommendation_analytics.html', name: 'Recommendation Analytics', device: 'desktop', flow: 'monitoring' },
+      30: { file: '30_walkin_dashboard.html', name: 'Walk-In Dashboard', device: 'desktop', flow: 'walkin' },
+      31: { file: '31_create_walkin_customer.html', name: 'Create Walk-In Customer', device: 'desktop', flow: 'walkin' },
+      32: { file: '32_walkin_order_placement.html', name: 'Order Placement', device: 'desktop', flow: 'walkin' },
+      33: { file: '33_mobile_create_customer_onroute.html', name: 'Create Customer On-Route', device: 'mobile', flow: 'advanced' },
+      34: { file: '34_mobile_outstanding_payments.html', name: 'Outstanding Payments', device: 'mobile', flow: 'advanced' },
+      35: { file: '35_admin_customer_multiroute.html', name: 'Multi-Route Assignment', device: 'desktop', flow: 'advanced' },
+      36: { file: '36_platform_admin_crossorg.html', name: 'Platform Admin Analytics', device: 'desktop', flow: 'advanced' }
+    };
+    
+    // Flow definitions
+    const flows = {
+      admin: {
+        name: 'Admin Setup Journey',
+        screens: [1, 2, 3, 4, 2, 5, 6, 7]
+      },
+      manager: {
+        name: 'Manager Planning Journey',
+        screens: [8, 9, 10, 11]
+      },
+      agent: {
+        name: 'Field Agent Mobile Journey',
+        screens: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+      },
+      monitoring: {
+        name: 'Manager Monitoring Journey',
+        screens: [26, 27, 28, 29]
+      },
+      walkin: {
+        name: 'Walk-In Sales Journey',
+        screens: [30, 31, 32, 23]
+      },
+      advanced: {
+        name: 'Advanced Features',
+        screens: [33, 34, 35, 36]
+      }
+    };
+    
+    // State
+    let currentScreen = 1;
+    let currentFlow = 'admin';
+    let flowPosition = 0;
+    
+    // Initialize
+    function init() {
+      navigateTo(1);
+      updateFlowIndicator();
+      updateNavButtons();
+    }
+    
+    // Navigation
+    function navigateTo(screenNumber) {
+      const screen = screens[screenNumber];
+      if (!screen) return;
+      
+      showLoading();
+      
+      currentScreen = screenNumber;
+      
+      setTimeout(() => {
+        const iframe = document.getElementById('screenIframe');
+        iframe.src = screen.file;
+        
+        document.getElementById('screenName').textContent = screen.name;
+        
+        // Update device frame
+        const frame = document.getElementById('deviceFrame');
+        frame.className = `device-frame ${screen.device}`;
+        
+        // Update active states
+        document.querySelectorAll('.screen-item').forEach((item, index) => {
+          item.classList.remove('active');
+          if (index === screenNumber - 1) {
+            item.classList.add('active');
+          }
+        });
+        
+        // Update flow position
+        const flow = flows[currentFlow];
+        if (flow) {
+          flowPosition = flow.screens.indexOf(screenNumber);
+          if (flowPosition === -1) flowPosition = 0;
+          updateFlowIndicator();
+        }
+        
+        updateNavButtons();
+        hideLoading();
+      }, 250);
+    }
+    
+    function nextScreen() {
+      const flow = flows[currentFlow];
+      if (flow && flowPosition < flow.screens.length - 1) {
+        flowPosition++;
+        navigateTo(flow.screens[flowPosition]);
+      }
+    }
+    
+    function previousScreen() {
+      const flow = flows[currentFlow];
+      if (flow && flowPosition > 0) {
+        flowPosition--;
+        navigateTo(flow.screens[flowPosition]);
+      }
+    }
+    
+    function startFlow(flowKey) {
+      currentFlow = flowKey;
+      flowPosition = 0;
+      const flow = flows[flowKey];
+      
+      document.getElementById('flowName').textContent = flow.name;
+      
+      // Update active flow button
+      document.querySelectorAll('.flow-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.closest('.flow-btn').classList.add('active');
+      
+      navigateTo(flow.screens[0]);
+    }
+    
+    function resetFlow() {
+      flowPosition = 0;
+      const flow = flows[currentFlow];
+      navigateTo(flow.screens[0]);
+    }
+    
+    function updateFlowIndicator() {
+      const flow = flows[currentFlow];
+      if (!flow) return;
+      
+      const indicator = document.getElementById('flowIndicator');
+      indicator.innerHTML = '';
+      
+      flow.screens.forEach((screenNum, index) => {
+        const step = document.createElement('div');
+        step.className = 'flow-step';
+        step.title = `Step ${index + 1}: ${screens[screenNum].name}`;
+        step.onclick = () => {
+          flowPosition = index;
+          navigateTo(screenNum);
+        };
+        
+        if (index < flowPosition) {
+          step.classList.add('completed');
+        } else if (index === flowPosition) {
+          step.classList.add('active');
+        }
+        
+        indicator.appendChild(step);
+      });
+    }
+    
+    function updateNavButtons() {
+      const flow = flows[currentFlow];
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      prevBtn.disabled = flowPosition === 0;
+      nextBtn.disabled = flowPosition >= flow.screens.length - 1;
+    }
+    
+    function showLoading() {
+      document.getElementById('loadingOverlay').classList.add('active');
+    }
+    
+    function hideLoading() {
+      setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.remove('active');
+      }, 250);
+    }
+    
+    function toggleHelp() {
+      const toast = document.getElementById('infoToast');
+      toast.classList.toggle('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 5000);
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextScreen();
+      if (e.key === 'ArrowLeft') previousScreen();
+      if (e.key === 'r' || e.key === 'R') resetFlow();
+      if (e.key === '?' || e.key === 'h') toggleHelp();
+    });
+    
+    // Initialize on load
+    init();
+    
+    // Show welcome toast
+    setTimeout(() => {
+      toggleHelp();
+    }, 1000);
+  </script>
+</body>
+</html>
